@@ -5068,7 +5068,37 @@ function criarEstruturaDriveCampanha(idCampanha, nomeInfluenciador, marca, objet
     Logger.log('👤 Influenciador: ' + nomeInfluenciador);
     Logger.log('🏢 Marca: ' + marca);
     Logger.log('📝 Objeto: ' + objeto);
-    
+
+    // ═══════════════════════════════════════════════════════════════
+    // VERIFICAR SE JÁ EXISTE LINK DA PASTA NA PLANILHA
+    // ═══════════════════════════════════════════════════════════════
+
+    Logger.log('🔍 Verificando se pasta já existe...');
+    const sheet = setupAndamentosSheet();
+    const rowNum = findRowById(sheet, idCampanha);
+
+    if (rowNum) {
+      const linkExistente = sheet.getRange(rowNum, 12).getValue();
+
+      if (linkExistente && linkExistente.toString().trim() !== '') {
+        Logger.log('✅ Pasta já existe: ' + linkExistente);
+        Logger.log('⏭️  Pulando criação de pasta duplicada');
+        logFim('criarEstruturaDriveCampanha', true);
+
+        return {
+          success: true,
+          urlPastaCampanha: linkExistente,
+          message: 'Pasta já existe (não duplicada)'
+        };
+      }
+
+      Logger.log('📝 Coluna 12 vazia - prosseguindo com criação');
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // CRIAR ESTRUTURA DRIVE
+    // ═══════════════════════════════════════════════════════════════
+
     const props = PropertiesService.getScriptProperties();
     const pastaAssessoradosId = props.getProperty('PASTA_ASSESSORADOS');
     
