@@ -1389,6 +1389,7 @@
                     const idCampanha = form.querySelector('[name="idCampanha"]').value;
                     let dataPrevista = "";
                     let nomeEtapa = "";
+                    let eventIdField = "";
                     const nomeInfluenciador =
                          document.querySelector('[name="linkPastaConteudo"]')?.closest("form")?.dataset?.nome || "";
                     const marca =
@@ -1397,22 +1398,27 @@
                          case "contrato":
                               dataPrevista = form.querySelector('[name="contratoDataPrevista"]').value;
                               nomeEtapa = "Contrato";
+                              eventIdField = "eventIdContrato";
                               break;
                          case "roteiro":
                               dataPrevista = form.querySelector('[name="roteiroDataPrevista"]').value;
                               nomeEtapa = "Roteiro";
+                              eventIdField = "eventIdRoteiro";
                               break;
                          case "postagem":
                               dataPrevista = form.querySelector('[name="postagemData"]').value;
                               nomeEtapa = "Postagem";
+                              eventIdField = "eventIdPostagem";
                               break;
                          case "metricas":
                               dataPrevista = form.querySelector('[name="metricasDataPrevista"]').value;
                               nomeEtapa = "Métricas";
+                              eventIdField = "eventIdMetricas";
                               break;
                          case "repasse":
                               dataPrevista = form.querySelector('[name="repasseData"]').value;
                               nomeEtapa = "Repasse";
+                              eventIdField = "eventIdRepasse";
                               break;
                     }
                     if (!dataPrevista) {
@@ -1422,11 +1428,23 @@
                     showLoading("Criando evento no calendário...");
                     google.script.run
                          .withSuccessHandler(function (result) {
-                              hideLoading();
-                              if (result.success) {
-                                   showToast("✅ Evento criado no Google Calendar!", "success");
+                              if (result.success && result.eventoId) {
+                                   const dados = { idCampanha: idCampanha };
+                                   dados[eventIdField] = result.eventoId;
+                                   google.script.run
+                                        .withSuccessHandler(function () {
+                                             hideLoading();
+                                             showToast("✅ Evento criado no Google Calendar!", "success");
+                                        })
+                                        .withFailureHandler(function (error) {
+                                             hideLoading();
+                                             showToast("⚠️ Evento criado mas não foi possível salvar o ID", "error");
+                                             console.error(error);
+                                        })
+                                        .updateChecklistCompleto(dados);
                               } else {
-                                   showToast("❌ " + result.message, "error");
+                                   hideLoading();
+                                   showToast("❌ " + (result.message || "Erro ao criar evento"), "error");
                               }
                          })
                          .withFailureHandler(function (error) {

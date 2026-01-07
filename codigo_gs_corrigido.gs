@@ -3430,10 +3430,17 @@ function setupChecklistSheetComplete() {
     // ═══ OBSERVAÇÕES E METADATA (3 colunas) ═══
     'Observações Campanha',           // 55 - NOVO!
     'Data Criação',                   // 56
-    'Última Atualização'              // 57
+    'Última Atualização',             // 57
+
+    // ═══ CALENDAR EVENT IDs (5 colunas) ═══
+    'Event ID Contrato',              // 58
+    'Event ID Roteiro',               // 59
+    'Event ID Postagem',              // 60
+    'Event ID Métricas',              // 61
+    'Event ID Repasse'                // 62
   ];
-  
-  // Total: 57 colunas
+
+  // Total: 62 colunas
   
   const primeiracelula = sheet.getRange(1, 1).getValue();
   
@@ -3520,33 +3527,40 @@ function criarChecklistCompleto(idCampanha, idAssessorado, nomeAssessorado, marc
     // Buscar links das pastas Drive
     const linkPastaConteudo = buscarLinkPastaDriveCampanha(idCampanha, '03_CONTEUDO_APROVACAO');
     const linkPastaMetricas = buscarLinkPastaDriveCampanha(idCampanha, '05_METRICAS_RESULTADOS');
-    
-    // Criar array com 57 posições (todas as colunas)
-    const row = new Array(57).fill('');
-    
+
+    // Criar array com 62 posições (todas as colunas)
+    const row = new Array(62).fill('');
+
     // Identificação (1-4)
     row[0] = idCampanha;
     row[1] = idAssessorado;
     row[2] = nomeAssessorado;
     row[3] = marca;
-    
+
     // Conteúdo (28-30)
     row[27] = 0;                      // Quantidade Conteúdos (inicialmente 0)
     row[28] = '[]';                   // Conteúdos JSON (array vazio)
     row[29] = linkPastaConteudo;      // Link Pasta Conteúdo
-    
+
     // Métricas (38-40)
     row[39] = linkPastaMetricas;      // Link Pasta Métricas
-    
+
     // Repasse (49-54) - AUTO-CALCULADO
     row[48] = valorTotal;             // Valor Total Campanha
     row[49] = repasseInfluenciador;   // Repasse 80%
     row[50] = taxaLitte;              // Taxa Littê 20%
     row[51] = 'AGUARDANDO NF';        // Status Repasse
-    
+
     // Metadata (55-57)
     row[55] = hoje;                   // Data Criação
     row[56] = hoje;                   // Última Atualização
+
+    // Calendar Event IDs (58-62) - inicialmente vazios
+    row[57] = '';                     // Event ID Contrato
+    row[58] = '';                     // Event ID Roteiro
+    row[59] = '';                     // Event ID Postagem
+    row[60] = '';                     // Event ID Métricas
+    row[61] = '';                     // Event ID Repasse
     
     Logger.log('✅ Array criado com ' + row.length + ' posições');
     
@@ -3592,8 +3606,8 @@ function getChecklistCompleto(idCampanha) {
   try {
     const sheet = setupChecklistSheetComplete();
     if (sheet.getLastRow() <= 1) return null;
-    
-    const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 57).getValues();
+
+    const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 62).getValues();
     const id = String(idCampanha).trim();
     
     const row = data.find(function(r) { 
@@ -3686,7 +3700,14 @@ function getChecklistCompleto(idCampanha) {
       // Observações e Metadata
       observacoesCampanha: String(row[54] || ''),      // NOVO!
       dataCriacao: formatDateToString(row[55]),
-      ultimaAtualizacao: formatDateToString(row[56])
+      ultimaAtualizacao: formatDateToString(row[56]),
+
+      // Calendar Event IDs
+      eventIdContrato: String(row[57] || ''),
+      eventIdRoteiro: String(row[58] || ''),
+      eventIdPostagem: String(row[59] || ''),
+      eventIdMetricas: String(row[60] || ''),
+      eventIdRepasse: String(row[61] || '')
     };
     
   } catch (e) {
@@ -3796,7 +3817,14 @@ function updateChecklistCompleto(dados) {
     
     // OBSERVAÇÕES (55)
     if (dados.observacoesCampanha !== undefined) sheet.getRange(rowNum, 55).setValue(dados.observacoesCampanha);
-    
+
+    // CALENDAR EVENT IDs (58-62)
+    if (dados.eventIdContrato !== undefined) sheet.getRange(rowNum, 58).setValue(dados.eventIdContrato);
+    if (dados.eventIdRoteiro !== undefined) sheet.getRange(rowNum, 59).setValue(dados.eventIdRoteiro);
+    if (dados.eventIdPostagem !== undefined) sheet.getRange(rowNum, 60).setValue(dados.eventIdPostagem);
+    if (dados.eventIdMetricas !== undefined) sheet.getRange(rowNum, 61).setValue(dados.eventIdMetricas);
+    if (dados.eventIdRepasse !== undefined) sheet.getRange(rowNum, 62).setValue(dados.eventIdRepasse);
+
     // Atualizar timestamp (57)
     sheet.getRange(rowNum, 57).setValue(hoje);
     
