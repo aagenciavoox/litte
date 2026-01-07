@@ -2337,9 +2337,15 @@ function atualizarAndamento(dados) {
     // ═══════════════════════════════════════════════════════════════
     // DETECÇÃO: STATUS MUDOU PARA "FECHADO"?
     // ═══════════════════════════════════════════════════════════════
-    
-    if (dados.statusDetalhado === 'Fechado' && statusAntigo !== 'Fechado') {
-      
+
+    // Normalizar strings para comparação robusta
+    const statusAntigoStr = String(statusAntigo || '').trim();
+    const statusNovoStr = String(dados.statusDetalhado || '').trim();
+
+    // Só executar automações se status está MUDANDO PARA "Fechado"
+    // (não re-executar se já estava "Fechado")
+    if (statusNovoStr === 'Fechado' && statusAntigoStr !== 'Fechado') {
+
       Logger.log('');
       Logger.log('🎯🎯🎯 STATUS MUDOU PARA FECHADO! 🎯🎯🎯');
       Logger.log('🚀 Iniciando automações...');
@@ -2447,16 +2453,21 @@ function atualizarAndamento(dados) {
       
       Logger.log('');
       Logger.log('🎉🎉🎉 TODAS AS AUTOMAÇÕES CONCLUÍDAS! 🎉🎉🎉');
+    } else if (statusNovoStr === 'Fechado' && statusAntigoStr === 'Fechado') {
+      Logger.log('');
+      Logger.log('ℹ️  Campanha já estava "Fechado" - automações não re-executadas');
+      Logger.log('✅ Edição permitida sem duplicar estruturas');
+      Logger.log('');
     }
-    
+
     // Registrar histórico
     registrarHistorico(
       'Andamento',
       dados.idCampanha,
       'Atualizou',
       'Sistema',
-      statusAntigo,
-      dados.statusDetalhado || statusAntigo,
+      statusAntigoStr,
+      statusNovoStr || statusAntigoStr,
       'Andamento atualizado'
     );
     
