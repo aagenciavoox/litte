@@ -3834,10 +3834,104 @@ function updateChecklistCompleto(dados) {
     // ═══════════════════════════════════════════════════════════════
     // VERIFICAR SE PRECISA ATUALIZAR EVENTOS NO CALENDAR
     // ═══════════════════════════════════════════════════════════════
-    
-    // TODO: Implementar lógica de atualização de eventos
-    // Se uma data mudou, excluir evento antigo e criar novo
-    
+
+    try {
+      const checklistAtual = getChecklistCompleto(dados.idCampanha);
+      if (checklistAtual) {
+        const props = PropertiesService.getScriptProperties();
+        const calendarId = props.getProperty('CALENDAR_ID');
+
+        if (calendarId) {
+          const calendar = CalendarApp.getCalendarById(calendarId);
+          const nomeInfluenciador = checklistAtual.nomeAssessorado || '';
+          const marca = checklistAtual.marca || '';
+
+          // Mapeamento de campos de data para event IDs e etapas
+          const eventosParaAtualizar = [
+            {
+              dataCampo: 'dataPrevAssinaturaContrato',
+              eventoIdCampo: 'eventIdContrato',
+              etapa: 'CONTRATO',
+              eventoIdAtual: checklistAtual.eventIdContrato
+            },
+            {
+              dataCampo: 'dataPrevRoteiro',
+              eventoIdCampo: 'eventIdRoteiro',
+              etapa: 'ROTEIRO',
+              eventoIdAtual: checklistAtual.eventIdRoteiro
+            },
+            {
+              dataCampo: 'dataPrevPostagem',
+              eventoIdCampo: 'eventIdPostagem',
+              etapa: 'POSTAGEM',
+              eventoIdAtual: checklistAtual.eventIdPostagem
+            },
+            {
+              dataCampo: 'dataPrevColetaMetricas',
+              eventoIdCampo: 'eventIdMetricas',
+              etapa: 'METRICAS',
+              eventoIdAtual: checklistAtual.eventIdMetricas
+            },
+            {
+              dataCampo: 'dataRepasse',
+              eventoIdCampo: 'eventIdRepasse',
+              etapa: 'REPASSE',
+              eventoIdAtual: checklistAtual.eventIdRepasse
+            }
+          ];
+
+          eventosParaAtualizar.forEach(function(config) {
+            const novaData = dados[config.dataCampo];
+            const eventoIdAtual = config.eventoIdAtual;
+
+            // Se a data mudou e há um evento existente
+            if (novaData !== undefined && eventoIdAtual && eventoIdAtual.trim() !== '') {
+              try {
+                Logger.log('🔄 Atualizando evento de ' + config.etapa);
+
+                // Deletar evento antigo
+                const eventoAntigo = calendar.getEventById(eventoIdAtual);
+                if (eventoAntigo) {
+                  eventoAntigo.deleteEvent();
+                  Logger.log('🗑️ Evento antigo deletado: ' + eventoIdAtual);
+                }
+
+                // Criar novo evento
+                const resultadoNovo = criarEventoChecklistEtapa(
+                  dados.idCampanha,
+                  config.etapa,
+                  novaData,
+                  nomeInfluenciador,
+                  marca
+                );
+
+                // Atualizar o event ID no checklist
+                if (resultadoNovo.success && resultadoNovo.eventoId) {
+                  const coluna = {
+                    'eventIdContrato': 58,
+                    'eventIdRoteiro': 59,
+                    'eventIdPostagem': 60,
+                    'eventIdMetricas': 61,
+                    'eventIdRepasse': 62
+                  }[config.eventoIdCampo];
+
+                  if (coluna) {
+                    sheet.getRange(rowNum, coluna).setValue(resultadoNovo.eventoId);
+                    Logger.log('✅ Novo evento criado: ' + resultadoNovo.eventoId);
+                  }
+                }
+
+              } catch (e) {
+                Logger.log('⚠️ Erro ao atualizar evento de ' + config.etapa + ': ' + e);
+              }
+            }
+          });
+        }
+      }
+    } catch (e) {
+      Logger.log('⚠️ Erro ao processar atualização de eventos: ' + e);
+    }
+
     logFim('updateChecklistCompleto', true);
     
     return { success: true, message: 'Checklist atualizado com sucesso' };
@@ -5949,13 +6043,20 @@ function criarChecklistManualTeste() {
 // ═══════════════════════════════════════════════════════════════════════
 //                      GOOGLE CALENDAR - EXCLUIR EVENTO
 // ═══════════════════════════════════════════════════════════════════════
+//
+// ⚠️ DEPRECATED - DEAD CODE - NOT USED
+// This function is NOT called from anywhere in the codebase.
+// Calendar event deletion is now handled directly in updateChecklistCompleto()
+// Do NOT use this function. Keep for reference only.
+// ═══════════════════════════════════════════════════════════════════════
 
 /**
  * Exclui um evento do Google Calendar
  * Usado quando uma data de etapa é alterada
- * 
+ *
  * @param {string} eventoId - ID do evento
  * @returns {Object} {success, message}
+ * @deprecated Use updateChecklistCompleto() which handles event updates automatically
  */
 function excluirEventoCalendar(eventoId) {
   try {
@@ -5985,11 +6086,17 @@ function excluirEventoCalendar(eventoId) {
 // ═══════════════════════════════════════════════════════════════════════
 //                      GOOGLE CALENDAR - ATUALIZAR EVENTO
 // ═══════════════════════════════════════════════════════════════════════
+//
+// ⚠️ DEPRECATED - DEAD CODE - NOT USED
+// This function is NOT called from anywhere in the codebase.
+// Calendar event updates are now handled directly in updateChecklistCompleto()
+// Do NOT use this function. Keep for reference only.
+// ═══════════════════════════════════════════════════════════════════════
 
 /**
  * Atualiza a data de um evento existente
  * Exclui o evento antigo e cria um novo
- * 
+ *
  * @param {string} eventoIdAntigo - ID do evento a ser excluído
  * @param {string} idCampanha - ID da campanha
  * @param {string} etapa - Etapa do checklist
@@ -5997,6 +6104,7 @@ function excluirEventoCalendar(eventoId) {
  * @param {string} nomeInfluenciador - Nome do influenciador
  * @param {string} marca - Marca
  * @returns {Object} {success, novoEventoId, message}
+ * @deprecated Use updateChecklistCompleto() which handles event updates automatically
  */
 function atualizarEventoCalendar(eventoIdAntigo, idCampanha, etapa, novaData, nomeInfluenciador, marca) {
   try {
@@ -8640,6 +8748,13 @@ function excluirNota(id) {
 // ============================================================================
 // 5. GERENCIAMENTO DE EVENTOS DO CALENDAR (ATUALIZAÇÃO)
 // ============================================================================
+//
+// ⚠️ DEPRECATED - DEAD CODE - NOT USED - DUPLICATE DEFINITION
+// This is a DUPLICATE definition of atualizarEventoCalendar.
+// This function is NOT called from anywhere in the codebase.
+// Calendar event updates are now handled directly in updateChecklistCompleto()
+// Do NOT use this function. Keep for reference only.
+// ============================================================================
 
 /**
  * Atualiza um evento do calendar (exclui o antigo e cria novo)
@@ -8650,6 +8765,7 @@ function excluirNota(id) {
  * @param {string} nome - Nome do influenciador
  * @param {string} marca - Marca
  * @returns {object} {success, eventoId, message}
+ * @deprecated Use updateChecklistCompleto() which handles event updates automatically
  */
 function atualizarEventoCalendar(eventoIdAntigo, idCampanha, etapa, novaData, nome, marca) {
   try {
