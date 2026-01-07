@@ -2322,11 +2322,27 @@ function atualizarAndamento(dados) {
     if (dados.descricaoEscopo !== undefined) {
       sheet.getRange(rowNum, 15).setValue(dados.descricaoEscopo);
     }
-    
+
+    if (dados.linkPastaCampanha !== undefined) {
+      sheet.getRange(rowNum, 12).setValue(dados.linkPastaCampanha);
+    }
+
+    if (dados.ultimoRetorno !== undefined) {
+      sheet.getRange(rowNum, 13).setValue(dados.ultimoRetorno);
+    }
+
+    if (dados.dataPrimeiroContato !== undefined) {
+      sheet.getRange(rowNum, 19).setValue(dados.dataPrimeiroContato);
+    }
+
+    if (dados.proximoFollowUp !== undefined) {
+      sheet.getRange(rowNum, 20).setValue(dados.proximoFollowUp);
+    }
+
     if (dados.ultimaMensagem !== undefined) {
       sheet.getRange(rowNum, 22).setValue(dados.ultimaMensagem);
     }
-    
+
     // Atualizar timestamps
     sheet.getRange(rowNum, 18).setValue(new Date()); // Última Atualização
     sheet.getRange(rowNum, 21).setValue(new Date()); // Última Interação
@@ -3609,13 +3625,13 @@ function getChecklistCompleto(idCampanha) {
 
     const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 62).getValues();
     const id = String(idCampanha).trim();
-    
-    const row = data.find(function(r) { 
-      return String(r[0]).trim() === id; 
+
+    const row = data.find(function(r) {
+      return String(r[0]).trim() === id;
     });
-    
+
     if (!row) return null;
-    
+
     // Parsear JSON de conteúdos
     let conteudos = [];
     try {
@@ -3623,14 +3639,14 @@ function getChecklistCompleto(idCampanha) {
     } catch (e) {
       conteudos = [];
     }
-    
+
     return {
       // Identificação
       idCampanha: String(row[0] || ''),
       idAssessorado: String(row[1] || ''),
       nomeAssessorado: String(row[2] || ''),
       marca: String(row[3] || ''),
-      
+
       // Contrato
       precisaContrato: String(row[4] || ''),
       statusContrato: String(row[5] || ''),
@@ -3638,31 +3654,35 @@ function getChecklistCompleto(idCampanha) {
       dataRealAssinaturaContrato: formatDateToString(row[7]),
       linkContrato: String(row[8] || ''),
       obsContrato: String(row[9] || ''),
-      
-      // Produto (SEM valor)
+
+      // Produto
       precisaProduto: String(row[10] || ''),
       nomeProduto: String(row[11] || ''),
       quantidade: row[12] || '',
-      enderecoEnvio: String(row[13] || ''),
-      statusProduto: String(row[14] || ''),
-      dataEnvioProduto: formatDateToString(row[15]),
-      codigoRastreio: String(row[16] || ''),
-      linkRastreamento: String(row[17] || ''),
-      
+      valorProduto: parseFloat(row[13]) || 0,
+      enderecoEnvio: String(row[14] || ''),
+      statusProduto: String(row[15] || ''),
+      dataEnvioProduto: formatDateToString(row[16]),
+      codigoRastreio: String(row[17] || ''),
+      linkRastreamento: String(row[18] || ''),
+
       // Roteiro
-      precisaRoteiro: String(row[18] || ''),
-      tipoRoteiro: String(row[19] || ''),
-      numeroVersoes: row[20] || 0,
-      statusRoteiro: String(row[21] || ''),
-      dataPrevRoteiro: formatDateToString(row[22]),
-      dataRealRoteiro: formatDateToString(row[23]),
-      dataAprovRoteiro: formatDateToString(row[24]),
-      linkPastaRoteiro: String(row[25] || ''),
-      feedbackClienteRoteiro: String(row[26] || ''),
-      
-      // Conteúdo (NOVO SISTEMA)
+      precisaRoteiro: String(row[19] || ''),
+      tipoRoteiro: String(row[20] || ''),
+      numeroVersoes: row[21] || 0,
+      statusRoteiro: String(row[22] || ''),
+      dataPrevRoteiro: formatDateToString(row[23]),
+      dataRealRoteiro: formatDateToString(row[24]),
+      dataAprovRoteiro: formatDateToString(row[25]),
+      linkPastaRoteiro: String(row[26] || ''),
+
+      // Conteúdo (NOVO SISTEMA - repurposed columns 28-30)
+      // IMPORTANT: Columns 28-30 are repurposed from old Roteiro/Content fields:
+      // Col 28 was "Feedback Cliente", now "Quantidade Conteúdos"
+      // Col 29 was "Data Última Versão", now "Conteúdos JSON"
+      // Col 30 was "Status Conteúdo", now "Link Pasta Conteúdo"
       quantidadeConteudos: parseInt(row[27]) || 0,
-      conteudos: conteudos,              // Array de objetos
+      conteudos: conteudos,              // Array de objetos from row[28]
       linkPastaConteudo: String(row[29] || ''),
       
       // Postagem (SEM métricas)
@@ -3709,10 +3729,67 @@ function getChecklistCompleto(idCampanha) {
       eventIdMetricas: String(row[60] || ''),
       eventIdRepasse: String(row[61] || '')
     };
-    
+
   } catch (e) {
     Logger.log('❌ getChecklistCompleto: ' + e);
     return null;
+  }
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════
+//                      GET CHECKLIST + ANDAMENTO (WRAPPER PARA HTML)
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * Wrapper function para buscar checklist com andamento
+ * Retorna formato compatível com o HTML: {success, checklist, andamento, message}
+ *
+ * @param {string} idCampanha - ID da campanha
+ * @returns {Object} {success, checklist, andamento, message}
+ */
+function getChecklistCompletoComAndamento(idCampanha) {
+  try {
+    logInicio('getChecklistCompletoComAndamento - ID: ' + idCampanha);
+
+    const checklist = getChecklistCompleto(idCampanha);
+
+    if (!checklist) {
+      Logger.log('❌ Checklist não encontrado');
+      logFim('getChecklistCompletoComAndamento', false);
+      return {
+        success: false,
+        message: 'Checklist não encontrado para campanha: ' + idCampanha
+      };
+    }
+
+    const andamento = getAndamento(idCampanha);
+
+    if (!andamento) {
+      Logger.log('⚠️ Andamento não encontrado, retornando só checklist');
+    }
+
+    Logger.log('✅ Checklist e andamento encontrados');
+    logFim('getChecklistCompletoComAndamento', true);
+
+    return {
+      success: true,
+      checklist: checklist,
+      andamento: andamento || {
+        idCampanha: idCampanha,
+        marca: checklist.marca || '',
+        nomeInfluenciador: checklist.nomeAssessorado || '',
+        valorFechado: checklist.valorTotalCampanha || 0
+      }
+    };
+
+  } catch (e) {
+    Logger.log('❌ ERRO em getChecklistCompletoComAndamento: ' + e);
+    logFim('getChecklistCompletoComAndamento', false);
+    return {
+      success: false,
+      message: e.toString()
+    };
   }
 }
 
@@ -3758,28 +3835,32 @@ function updateChecklistCompleto(dados) {
     if (dados.linkContrato !== undefined) sheet.getRange(rowNum, 9).setValue(dados.linkContrato);
     if (dados.obsContrato !== undefined) sheet.getRange(rowNum, 10).setValue(dados.obsContrato);
     
-    // PRODUTO (11-18) - SEM valor
+    // PRODUTO (11-19)
     if (dados.precisaProduto !== undefined) sheet.getRange(rowNum, 11).setValue(dados.precisaProduto);
     if (dados.nomeProduto !== undefined) sheet.getRange(rowNum, 12).setValue(dados.nomeProduto);
     if (dados.quantidade !== undefined) sheet.getRange(rowNum, 13).setValue(dados.quantidade);
-    if (dados.enderecoEnvio !== undefined) sheet.getRange(rowNum, 14).setValue(dados.enderecoEnvio);
-    if (dados.statusProduto !== undefined) sheet.getRange(rowNum, 15).setValue(dados.statusProduto);
-    if (dados.dataEnvioProduto !== undefined) sheet.getRange(rowNum, 16).setValue(dados.dataEnvioProduto);
-    if (dados.codigoRastreio !== undefined) sheet.getRange(rowNum, 17).setValue(dados.codigoRastreio);
-    if (dados.linkRastreamento !== undefined) sheet.getRange(rowNum, 18).setValue(dados.linkRastreamento);
-    
-    // ROTEIRO (19-27)
-    if (dados.precisaRoteiro !== undefined) sheet.getRange(rowNum, 19).setValue(dados.precisaRoteiro);
-    if (dados.tipoRoteiro !== undefined) sheet.getRange(rowNum, 20).setValue(dados.tipoRoteiro);
-    if (dados.numeroVersoes !== undefined) sheet.getRange(rowNum, 21).setValue(dados.numeroVersoes);
-    if (dados.statusRoteiro !== undefined) sheet.getRange(rowNum, 22).setValue(dados.statusRoteiro);
-    if (dados.dataPrevRoteiro !== undefined) sheet.getRange(rowNum, 23).setValue(dados.dataPrevRoteiro);
-    if (dados.dataRealRoteiro !== undefined) sheet.getRange(rowNum, 24).setValue(dados.dataRealRoteiro);
-    if (dados.dataAprovRoteiro !== undefined) sheet.getRange(rowNum, 25).setValue(dados.dataAprovRoteiro);
-    if (dados.linkPastaRoteiro !== undefined) sheet.getRange(rowNum, 26).setValue(dados.linkPastaRoteiro);
-    if (dados.feedbackClienteRoteiro !== undefined) sheet.getRange(rowNum, 27).setValue(dados.feedbackClienteRoteiro);
-    
-    // CONTEÚDO (28-30) - NOVO SISTEMA
+    if (dados.valorProduto !== undefined) sheet.getRange(rowNum, 14).setValue(dados.valorProduto);
+    if (dados.enderecoEnvio !== undefined) sheet.getRange(rowNum, 15).setValue(dados.enderecoEnvio);
+    if (dados.statusProduto !== undefined) sheet.getRange(rowNum, 16).setValue(dados.statusProduto);
+    if (dados.dataEnvioProduto !== undefined) sheet.getRange(rowNum, 17).setValue(dados.dataEnvioProduto);
+    if (dados.codigoRastreio !== undefined) sheet.getRange(rowNum, 18).setValue(dados.codigoRastreio);
+    if (dados.linkRastreamento !== undefined) sheet.getRange(rowNum, 19).setValue(dados.linkRastreamento);
+
+    // ROTEIRO (20-27)
+    if (dados.precisaRoteiro !== undefined) sheet.getRange(rowNum, 20).setValue(dados.precisaRoteiro);
+    if (dados.tipoRoteiro !== undefined) sheet.getRange(rowNum, 21).setValue(dados.tipoRoteiro);
+    if (dados.numeroVersoes !== undefined) sheet.getRange(rowNum, 22).setValue(dados.numeroVersoes);
+    if (dados.statusRoteiro !== undefined) sheet.getRange(rowNum, 23).setValue(dados.statusRoteiro);
+    if (dados.dataPrevRoteiro !== undefined) sheet.getRange(rowNum, 24).setValue(dados.dataPrevRoteiro);
+    if (dados.dataRealRoteiro !== undefined) sheet.getRange(rowNum, 25).setValue(dados.dataRealRoteiro);
+    if (dados.dataAprovRoteiro !== undefined) sheet.getRange(rowNum, 26).setValue(dados.dataAprovRoteiro);
+    if (dados.linkPastaRoteiro !== undefined) sheet.getRange(rowNum, 27).setValue(dados.linkPastaRoteiro);
+
+    // CONTEÚDO (28-30) - NOVO SISTEMA (repurposed columns)
+    // IMPORTANT: Columns 28-30 replace old Roteiro/Content fields:
+    // Col 28 replaces "Feedback Cliente" → now "Quantidade Conteúdos"
+    // Col 29 replaces "Data Última Versão" → now "Conteúdos JSON"
+    // Col 30 replaces "Status Conteúdo" → now "Link Pasta Conteúdo"
     if (dados.quantidadeConteudos !== undefined) sheet.getRange(rowNum, 28).setValue(dados.quantidadeConteudos);
     if (dados.conteudos !== undefined) {
       sheet.getRange(rowNum, 29).setValue(JSON.stringify(dados.conteudos));
