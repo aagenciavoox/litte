@@ -1029,8 +1029,9 @@
                     const formData = new FormData(form);
                     const status = formData.get("status");
                     const statusAnterior = formData.get("statusAnterior");
+                    const idCampanha = formData.get("idCampanha");
                     const dados = {
-                         idCampanha: formData.get("idCampanha"),
+                         idCampanha: idCampanha,
                          idAssessorado: formData.get("idAssessorado"),
                          marca: formData.get("marca"),
                          objeto: formData.get("objeto"),
@@ -1056,9 +1057,75 @@
                                    closeModal("modal-editar-andamento");
                                    showToast("✅ Andamento atualizado!", "success");
                                    cachedData.prospeccoes = null;
-                                   setTimeout(function () {
-                                        renderProspeccoes();
-                                   }, 1000);
+
+                                   // Se status mudou para "Fechado", buscar e exibir link da pasta Drive
+                                   if (status === "Fechado" && statusAnterior !== "Fechado") {
+                                        showLoading("Buscando pasta do Drive...");
+                                        google.script.run
+                                             .withSuccessHandler(function (linkResult) {
+                                                  hideLoading();
+                                                  if (linkResult && linkResult.success && linkResult.url) {
+                                                       showToast("✅ Pasta do Drive criada com sucesso!", "success");
+                                                       // Mostrar modal com o link
+                                                       const linkHTML = `<div id="modal-drive-link" class="fixed inset-0 modal-backdrop flex items-center justify-center z-50 fade-in">
+                                                            <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl m-4 modal-enter">
+                                                                 <div class="bg-gradient-to-r from-litte-green to-emerald-600 text-white px-6 py-5 flex items-center justify-between rounded-t-3xl">
+                                                                      <div>
+                                                                           <h3 class="text-xl font-bold flex items-center gap-2">
+                                                                                <i data-lucide="folder-check" class="w-6 h-6"></i>
+                                                                                Pasta do Drive Criada!
+                                                                           </h3>
+                                                                           <p class="text-sm text-green-100 mt-1">Campanha: ${idCampanha}</p>
+                                                                      </div>
+                                                                      <button onclick="closeModal('modal-drive-link')" class="text-2xl hover:text-green-100 transition-all hover:rotate-90">&times;</button>
+                                                                 </div>
+                                                                 <div class="p-8">
+                                                                      <div class="bg-green-50 border-2 border-green-200 rounded-2xl p-6 mb-6">
+                                                                           <div class="flex items-center gap-3 mb-4">
+                                                                                <i data-lucide="check-circle" class="w-8 h-8 text-green-600"></i>
+                                                                                <div>
+                                                                                     <h4 class="text-lg font-bold text-slate-900">Estrutura completa criada!</h4>
+                                                                                     <p class="text-sm text-slate-600">Todas as pastas e documentos foram configurados</p>
+                                                                                </div>
+                                                                           </div>
+                                                                           <a href="${linkResult.url}" target="_blank"
+                                                                              class="flex items-center justify-center gap-3 bg-gradient-to-r from-litte-green to-emerald-600 hover:from-emerald-600 hover:to-litte-green text-white font-bold py-4 px-6 rounded-xl transition-all shadow-lg hover:shadow-xl">
+                                                                                <i data-lucide="external-link" class="w-5 h-5"></i>
+                                                                                Abrir Pasta da Campanha no Drive
+                                                                           </a>
+                                                                      </div>
+                                                                      <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg">
+                                                                           <p class="text-sm text-blue-800 flex items-start gap-2">
+                                                                                <i data-lucide="info" class="w-4 h-4 mt-0.5 flex-shrink-0"></i>
+                                                                                <span>Esta pasta contém todas as subpastas necessárias para gerenciar a campanha. Você pode acessá-la a qualquer momento através dos detalhes da campanha.</span>
+                                                                           </p>
+                                                                      </div>
+                                                                      <div class="flex justify-end mt-6 pt-4 border-t-2 border-slate-200">
+                                                                           <button onclick="closeModal('modal-drive-link');renderProspeccoes();"
+                                                                                class="px-6 py-3 border-2 border-slate-300 rounded-xl hover:bg-slate-50 font-semibold transition-all">
+                                                                                Fechar
+                                                                           </button>
+                                                                      </div>
+                                                                 </div>
+                                                            </div>
+                                                       </div>`;
+                                                       document.getElementById("modals-container").innerHTML = linkHTML;
+                                                       lucide.createIcons();
+                                                  } else {
+                                                       renderProspeccoes();
+                                                  }
+                                             })
+                                             .withFailureHandler(function (error) {
+                                                  hideLoading();
+                                                  console.error("Erro ao buscar pasta Drive:", error);
+                                                  renderProspeccoes();
+                                             })
+                                             .buscarLinkPastaDriveCampanha(idCampanha);
+                                   } else {
+                                        setTimeout(function () {
+                                             renderProspeccoes();
+                                        }, 1000);
+                                   }
                               } else {
                                    showToast("❌ Erro: " + result.message, "error");
                               }
