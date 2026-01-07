@@ -483,6 +483,14 @@
                                    `<p class="p-4 text-red-500 text-center text-sm">Erro ao carregar prazos.</p>`;
                          })
                          .getProximosPrazos(15);
+
+                    // Complemento: carregar prazos filtrados do checklist
+                    google.script.run
+                         .withSuccessHandler(renderPrazosChecklistFiltrados)
+                         .withFailureHandler(function () {
+                              // Silencioso - não mostra erro, apenas não complementa
+                         })
+                         .getProximosPrazosChecklist();
                }
                function renderProximosPrazos(prazos) {
                     const container = document.getElementById("proximos-prazos");
@@ -547,6 +555,47 @@
                          Automação: "from-pink-500 to-pink-600",
                     };
                     return cores[tipo] || "from-slate-500 to-slate-600";
+               }
+               function renderPrazosChecklistFiltrados(prazosChecklist) {
+                    const container = document.getElementById("proximos-prazos");
+                    if (!prazosChecklist || prazosChecklist.length === 0) {
+                         return; // Mantém o conteúdo existente se não houver prazos do checklist
+                    }
+
+                    // Complementar os prazos existentes com os do checklist
+                    const html = prazosChecklist
+                         .map((prazo) => {
+                              const status = getStatusPrazoChecklist(prazo.diasRestantes);
+                              return `<div class="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-all border-l-4 ${status.border} mb-2 bg-white shadow-sm border-y border-r border-slate-100"><div class="flex-1 min-w-0 pl-1"><div class="flex items-center gap-2 mb-1"><span class="px-2 py-0.5 rounded-full text-xs font-black uppercase ${status.badge}">${status.label}</span><span class="text-xs font-bold text-slate-600">${formatDataSimples(prazo.dataPrevista)}</span></div><p class="text-sm font-bold text-slate-800 truncate">${prazo.tarefa}</p><p class="text-xs text-slate-500 truncate">${prazo.idCampanha}${prazo.marca ? " | " + prazo.marca : ""}${prazo.nomeAssessorado ? " | " + prazo.nomeAssessorado : ""}</p><p class="text-xs text-slate-400 italic">Status: ${prazo.status}</p></div><button onclick="openModalChecklist('${prazo.idCampanha}')" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-slate-200 text-slate-400 hover:text-litte-accent transition-all" title="Abrir Checklist"><i data-lucide="check-square" class="w-4 h-4"></i></button></div>`;
+                         })
+                         .join("");
+
+                    // Adicionar os prazos do checklist ao container (substitui o conteúdo)
+                    container.innerHTML = html;
+                    lucide.createIcons();
+               }
+               function getStatusPrazoChecklist(dias) {
+                    if (dias < 0)
+                         return { label: "ATRASADO", border: "border-red-500", badge: "bg-red-100 text-red-700" };
+                    if (dias === 0)
+                         return { label: "HOJE", border: "border-orange-500", badge: "bg-orange-100 text-orange-700" };
+                    if (dias === 1)
+                         return {
+                              label: "AMANHÃ",
+                              border: "border-yellow-500",
+                              badge: "bg-yellow-100 text-yellow-700",
+                         };
+                    if (dias <= 3)
+                         return {
+                              label: `${dias} DIAS`,
+                              border: "border-blue-400",
+                              badge: "bg-blue-50 text-blue-600",
+                         };
+                    return {
+                         label: `${dias} DIAS`,
+                         border: "border-slate-300",
+                         badge: "bg-slate-100 text-slate-600",
+                    };
                }
                function refreshDashboard() {
                     renderDashboard();
