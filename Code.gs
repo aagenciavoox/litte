@@ -3571,10 +3571,17 @@ function setupChecklistSheetComplete() {
     // ═══ OBSERVAÇÕES E METADATA (3 colunas) ═══
     'Observações Campanha',           // 55 - NOVO!
     'Data Criação',                   // 56
-    'Última Atualização'              // 57
+    'Última Atualização',             // 57
+
+    // ═══ CALENDAR EVENT IDs (5 colunas) ═══
+    'Event ID Contrato',              // 58
+    'Event ID Roteiro',               // 59
+    'Event ID Postagem',              // 60
+    'Event ID Métricas',              // 61
+    'Event ID Repasse'                // 62
   ];
-  
-  // Total: 57 colunas
+
+  // Total: 62 colunas
   
   const primeiracelula = sheet.getRange(1, 1).getValue();
   
@@ -3662,7 +3669,7 @@ function criarChecklistCompleto(idCampanha, idAssessorado, nomeAssessorado, marc
     const linkPastaConteudo = buscarLinkPastaDriveCampanha(idCampanha, '03_CONTEUDO_APROVACAO');
     const linkPastaMetricas = buscarLinkPastaDriveCampanha(idCampanha, '05_METRICAS_RESULTADOS');
 
-    // Criar array com 62 posições (todas as colunas) - CORRIGIDO!
+    // Criar array com 62 posições (todas as colunas)
     const row = new Array(62).fill('');
 
     // Identificação (1-4)
@@ -3672,27 +3679,29 @@ function criarChecklistCompleto(idCampanha, idAssessorado, nomeAssessorado, marc
     row[3] = marca;
 
     // Conteúdo (28-30)
-    row[27] = 0;                      // Col 28 - Quantidade Conteúdos (inicialmente 0)
-    row[28] = '[]';                   // Col 29 - Conteúdos JSON (array vazio)
-    row[29] = linkPastaConteudo;      // Col 30 - Link Pasta Conteúdo
+    row[27] = 0;                      // Quantidade Conteúdos (inicialmente 0)
+    row[28] = '[]';                   // Conteúdos JSON (array vazio)
+    row[29] = linkPastaConteudo;      // Link Pasta Conteúdo
 
-    // Métricas (51-53) - ÍNDICES CORRIGIDOS!
-    row[52] = linkPastaMetricas;      // Col 53 - Link Pasta Métricas
+    // Métricas (38-40)
+    row[39] = linkPastaMetricas;      // Link Pasta Métricas
 
-    // Financeiro (54-55)
-    row[53] = valorTotal;             // Col 54 - Valor Total Campanha
-    row[54] = '';                     // Col 55 - Data Prev Pag Cliente (vazio inicial)
+    // Repasse (49-54) - AUTO-CALCULADO
+    row[48] = valorTotal;             // Valor Total Campanha
+    row[49] = repasseInfluenciador;   // Repasse 80%
+    row[50] = taxaLitte;              // Taxa Littê 20%
+    row[51] = 'AGUARDANDO NF';        // Status Repasse
 
-    // Repasse (56-60) - ÍNDICES CORRIGIDOS!
-    row[55] = repasseInfluenciador;   // Col 56 - Repasse 80%
-    row[56] = taxaLitte;              // Col 57 - Taxa Littê 20%
-    row[57] = 'AGUARDANDO NF';        // Col 58 - Status Repasse
-    row[58] = '';                     // Col 59 - Data Repasse (vazio inicial)
-    row[59] = '';                     // Col 60 - Comprovante Repasse (vazio inicial)
+    // Metadata (55-57)
+    row[55] = hoje;                   // Data Criação
+    row[56] = hoje;                   // Última Atualização
 
-    // Metadata (61-62) - ÍNDICES CORRIGIDOS!
-    row[60] = hoje;                   // Col 61 - Data Criação
-    row[61] = hoje;                   // Col 62 - Última Atualização
+    // Calendar Event IDs (58-62) - inicialmente vazios
+    row[57] = '';                     // Event ID Contrato
+    row[58] = '';                     // Event ID Roteiro
+    row[59] = '';                     // Event ID Postagem
+    row[60] = '';                     // Event ID Métricas
+    row[61] = '';                     // Event ID Repasse
     
     Logger.log('✅ Array criado com ' + row.length + ' posições');
     
@@ -3800,35 +3809,50 @@ function getChecklistCompleto(idCampanha) {
       quantidadeConteudos: parseInt(row[27]) || 0,
       conteudos: conteudos,              // Array de objetos from row[28]
       linkPastaConteudo: String(row[29] || ''),
+      
+      // Postagem (SEM métricas)
+      statusPostagem: String(row[30] || ''),
+      redeSocial: String(row[31] || ''),
+      tipoPost: String(row[32] || ''),
+      dataPrevPostagem: formatDateToString(row[33]),
+      horarioPostagem: String(row[34] || ''),
+      dataRealPostagem: formatDateToString(row[35]),
+      linkPostagem: String(row[36] || ''),
+      
+      // Métricas (SEM detalhes)
+      dataPrevColetaMetricas: formatDateToString(row[37]),
+      statusMetricas: String(row[38] || ''),
+      linkPastaMetricas: String(row[39] || ''),
+      
+      // NF (SEM impostos, valor líquido, XML)
+      statusNF: String(row[40] || ''),
+      tipoNF: String(row[41] || ''),
+      numeroNF: String(row[42] || ''),
+      cnpj: String(row[43] || ''),
+      dataEmissaoNF: formatDateToString(row[44]),
+      dataPrevPagamento: formatDateToString(row[45]),  // NOVO!
+      valorNF: parseFloat(row[46]) || 0,
+      linkPdfNF: String(row[47] || ''),
+      
+      // Repasse (AUTO-CALCULADO)
+      valorTotalCampanha: parseFloat(row[48]) || 0,
+      repasseInfluenciador80: parseFloat(row[49]) || 0,
+      taxaLitte20: parseFloat(row[50]) || 0,
+      statusRepasse: String(row[51] || ''),
+      dataRepasse: formatDateToString(row[52]),
+      comprovanteRepasse: String(row[53] || ''),
+      
+      // Observações e Metadata
+      observacoesCampanha: String(row[54] || ''),      // NOVO!
+      dataCriacao: formatDateToString(row[55]),
+      ultimaAtualizacao: formatDateToString(row[56]),
 
-      // Postagem
-      statusPostagem: String(row[39] || ''),
-      redeSocial: String(row[40] || ''),
-      tipoPost: String(row[41] || ''),
-      dataPrevPostagem: formatDateToString(row[42]),
-      horarioPostagem: String(row[43] || ''),
-      dataRealPostagem: formatDateToString(row[44]),
-      linkPostagem: String(row[45] || ''),
-
-      // Métricas
-      dataPrevColetaMetricas: formatDateToString(row[50]),
-      statusMetricas: String(row[51] || ''),
-      linkPastaMetricas: String(row[52] || ''),
-
-      // Financeiro - Valor Total e Data Prev Pag Cliente
-      valorTotalCampanha: parseFloat(row[53]) || 0,
-      dataPrevPagCliente: formatDateToString(row[54]),
-
-      // Repasse
-      repasseInfluenciador80: parseFloat(row[55]) || 0,
-      taxaLitte20: parseFloat(row[56]) || 0,
-      statusRepasse: String(row[57] || ''),
-      dataRepasse: formatDateToString(row[58]),
-      comprovanteRepasse: String(row[59] || ''),
-
-      // Metadata
-      dataCriacao: formatDateToString(row[60]),
-      ultimaAtualizacao: formatDateToString(row[61])
+      // Calendar Event IDs
+      eventIdContrato: String(row[57] || ''),
+      eventIdRoteiro: String(row[58] || ''),
+      eventIdPostagem: String(row[59] || ''),
+      eventIdMetricas: String(row[60] || ''),
+      eventIdRepasse: String(row[61] || '')
     };
 
   } catch (e) {
@@ -3967,33 +3991,48 @@ function updateChecklistCompleto(dados) {
       sheet.getRange(rowNum, 29).setValue(JSON.stringify(dados.conteudos));
     }
     if (dados.linkPastaConteudo !== undefined) sheet.getRange(rowNum, 30).setValue(dados.linkPastaConteudo);
+    
+    // POSTAGEM (31-37) - SEM métricas
+    if (dados.statusPostagem !== undefined) sheet.getRange(rowNum, 31).setValue(dados.statusPostagem);
+    if (dados.redeSocial !== undefined) sheet.getRange(rowNum, 32).setValue(dados.redeSocial);
+    if (dados.tipoPost !== undefined) sheet.getRange(rowNum, 33).setValue(dados.tipoPost);
+    if (dados.dataPrevPostagem !== undefined) sheet.getRange(rowNum, 34).setValue(dados.dataPrevPostagem);
+    if (dados.horarioPostagem !== undefined) sheet.getRange(rowNum, 35).setValue(dados.horarioPostagem);
+    if (dados.dataRealPostagem !== undefined) sheet.getRange(rowNum, 36).setValue(dados.dataRealPostagem);
+    if (dados.linkPostagem !== undefined) sheet.getRange(rowNum, 37).setValue(dados.linkPostagem);
+    
+    // MÉTRICAS (38-40) - SEM detalhes
+    if (dados.dataPrevColetaMetricas !== undefined) sheet.getRange(rowNum, 38).setValue(dados.dataPrevColetaMetricas);
+    if (dados.statusMetricas !== undefined) sheet.getRange(rowNum, 39).setValue(dados.statusMetricas);
+    if (dados.linkPastaMetricas !== undefined) sheet.getRange(rowNum, 40).setValue(dados.linkPastaMetricas);
+    
+    // NF (41-48) - SEM impostos, valor líquido, XML
+    if (dados.statusNF !== undefined) sheet.getRange(rowNum, 41).setValue(dados.statusNF);
+    if (dados.tipoNF !== undefined) sheet.getRange(rowNum, 42).setValue(dados.tipoNF);
+    if (dados.numeroNF !== undefined) sheet.getRange(rowNum, 43).setValue(dados.numeroNF);
+    if (dados.cnpj !== undefined) sheet.getRange(rowNum, 44).setValue(dados.cnpj);
+    if (dados.dataEmissaoNF !== undefined) sheet.getRange(rowNum, 45).setValue(dados.dataEmissaoNF);
+    if (dados.dataPrevPagamento !== undefined) sheet.getRange(rowNum, 46).setValue(dados.dataPrevPagamento);
+    if (dados.valorNF !== undefined) sheet.getRange(rowNum, 47).setValue(dados.valorNF);
+    if (dados.linkPdfNF !== undefined) sheet.getRange(rowNum, 48).setValue(dados.linkPdfNF);
+    
+    // REPASSE (49-54)
+    if (dados.statusRepasse !== undefined) sheet.getRange(rowNum, 52).setValue(dados.statusRepasse);
+    if (dados.dataRepasse !== undefined) sheet.getRange(rowNum, 53).setValue(dados.dataRepasse);
+    if (dados.comprovanteRepasse !== undefined) sheet.getRange(rowNum, 54).setValue(dados.comprovanteRepasse);
+    
+    // OBSERVAÇÕES (55)
+    if (dados.observacoesCampanha !== undefined) sheet.getRange(rowNum, 55).setValue(dados.observacoesCampanha);
 
-    // POSTAGEM (40-46)
-    if (dados.statusPostagem !== undefined) sheet.getRange(rowNum, 40).setValue(dados.statusPostagem);
-    if (dados.redeSocial !== undefined) sheet.getRange(rowNum, 41).setValue(dados.redeSocial);
-    if (dados.tipoPost !== undefined) sheet.getRange(rowNum, 42).setValue(dados.tipoPost);
-    if (dados.dataPrevPostagem !== undefined) sheet.getRange(rowNum, 43).setValue(dados.dataPrevPostagem);
-    if (dados.horarioPostagem !== undefined) sheet.getRange(rowNum, 44).setValue(dados.horarioPostagem);
-    if (dados.dataRealPostagem !== undefined) sheet.getRange(rowNum, 45).setValue(dados.dataRealPostagem);
-    if (dados.linkPostagem !== undefined) sheet.getRange(rowNum, 46).setValue(dados.linkPostagem);
+    // CALENDAR EVENT IDs (58-62)
+    if (dados.eventIdContrato !== undefined) sheet.getRange(rowNum, 58).setValue(dados.eventIdContrato);
+    if (dados.eventIdRoteiro !== undefined) sheet.getRange(rowNum, 59).setValue(dados.eventIdRoteiro);
+    if (dados.eventIdPostagem !== undefined) sheet.getRange(rowNum, 60).setValue(dados.eventIdPostagem);
+    if (dados.eventIdMetricas !== undefined) sheet.getRange(rowNum, 61).setValue(dados.eventIdMetricas);
+    if (dados.eventIdRepasse !== undefined) sheet.getRange(rowNum, 62).setValue(dados.eventIdRepasse);
 
-    // MÉTRICAS (51-53)
-    if (dados.dataPrevColetaMetricas !== undefined) sheet.getRange(rowNum, 51).setValue(dados.dataPrevColetaMetricas);
-    if (dados.statusMetricas !== undefined) sheet.getRange(rowNum, 52).setValue(dados.statusMetricas);
-    if (dados.linkPastaMetricas !== undefined) sheet.getRange(rowNum, 53).setValue(dados.linkPastaMetricas);
-
-    // FINANCEIRO - Valor Total (54-55)
-    if (dados.valorTotalCampanha !== undefined) sheet.getRange(rowNum, 54).setValue(dados.valorTotalCampanha);
-    if (dados.dataPrevPagCliente !== undefined) sheet.getRange(rowNum, 55).setValue(dados.dataPrevPagCliente);
-
-    // REPASSE (56-60)
-    // Auto-calculated fields (56-57) not updated manually
-    if (dados.statusRepasse !== undefined) sheet.getRange(rowNum, 58).setValue(dados.statusRepasse);
-    if (dados.dataRepasse !== undefined) sheet.getRange(rowNum, 59).setValue(dados.dataRepasse);
-    if (dados.comprovanteRepasse !== undefined) sheet.getRange(rowNum, 60).setValue(dados.comprovanteRepasse);
-
-    // Atualizar timestamp (62)
-    sheet.getRange(rowNum, 62).setValue(hoje);
+    // Atualizar timestamp (57)
+    sheet.getRange(rowNum, 57).setValue(hoje);
     
     SpreadsheetApp.flush();
     Logger.log('✅ Checklist atualizado');
@@ -4001,10 +4040,104 @@ function updateChecklistCompleto(dados) {
     // ═══════════════════════════════════════════════════════════════
     // VERIFICAR SE PRECISA ATUALIZAR EVENTOS NO CALENDAR
     // ═══════════════════════════════════════════════════════════════
-    
-    // TODO: Implementar lógica de atualização de eventos
-    // Se uma data mudou, excluir evento antigo e criar novo
-    
+
+    try {
+      const checklistAtual = getChecklistCompleto(dados.idCampanha);
+      if (checklistAtual) {
+        const props = PropertiesService.getScriptProperties();
+        const calendarId = props.getProperty('CALENDAR_ID');
+
+        if (calendarId) {
+          const calendar = CalendarApp.getCalendarById(calendarId);
+          const nomeInfluenciador = checklistAtual.nomeAssessorado || '';
+          const marca = checklistAtual.marca || '';
+
+          // Mapeamento de campos de data para event IDs e etapas
+          const eventosParaAtualizar = [
+            {
+              dataCampo: 'dataPrevAssinaturaContrato',
+              eventoIdCampo: 'eventIdContrato',
+              etapa: 'CONTRATO',
+              eventoIdAtual: checklistAtual.eventIdContrato
+            },
+            {
+              dataCampo: 'dataPrevRoteiro',
+              eventoIdCampo: 'eventIdRoteiro',
+              etapa: 'ROTEIRO',
+              eventoIdAtual: checklistAtual.eventIdRoteiro
+            },
+            {
+              dataCampo: 'dataPrevPostagem',
+              eventoIdCampo: 'eventIdPostagem',
+              etapa: 'POSTAGEM',
+              eventoIdAtual: checklistAtual.eventIdPostagem
+            },
+            {
+              dataCampo: 'dataPrevColetaMetricas',
+              eventoIdCampo: 'eventIdMetricas',
+              etapa: 'METRICAS',
+              eventoIdAtual: checklistAtual.eventIdMetricas
+            },
+            {
+              dataCampo: 'dataRepasse',
+              eventoIdCampo: 'eventIdRepasse',
+              etapa: 'REPASSE',
+              eventoIdAtual: checklistAtual.eventIdRepasse
+            }
+          ];
+
+          eventosParaAtualizar.forEach(function(config) {
+            const novaData = dados[config.dataCampo];
+            const eventoIdAtual = config.eventoIdAtual;
+
+            // Se a data mudou e há um evento existente
+            if (novaData !== undefined && eventoIdAtual && eventoIdAtual.trim() !== '') {
+              try {
+                Logger.log('🔄 Atualizando evento de ' + config.etapa);
+
+                // Deletar evento antigo
+                const eventoAntigo = calendar.getEventById(eventoIdAtual);
+                if (eventoAntigo) {
+                  eventoAntigo.deleteEvent();
+                  Logger.log('🗑️ Evento antigo deletado: ' + eventoIdAtual);
+                }
+
+                // Criar novo evento
+                const resultadoNovo = criarEventoChecklistEtapa(
+                  dados.idCampanha,
+                  config.etapa,
+                  novaData,
+                  nomeInfluenciador,
+                  marca
+                );
+
+                // Atualizar o event ID no checklist
+                if (resultadoNovo.success && resultadoNovo.eventoId) {
+                  const coluna = {
+                    'eventIdContrato': 58,
+                    'eventIdRoteiro': 59,
+                    'eventIdPostagem': 60,
+                    'eventIdMetricas': 61,
+                    'eventIdRepasse': 62
+                  }[config.eventoIdCampo];
+
+                  if (coluna) {
+                    sheet.getRange(rowNum, coluna).setValue(resultadoNovo.eventoId);
+                    Logger.log('✅ Novo evento criado: ' + resultadoNovo.eventoId);
+                  }
+                }
+
+              } catch (e) {
+                Logger.log('⚠️ Erro ao atualizar evento de ' + config.etapa + ': ' + e);
+              }
+            }
+          });
+        }
+      }
+    } catch (e) {
+      Logger.log('⚠️ Erro ao processar atualização de eventos: ' + e);
+    }
+
     logFim('updateChecklistCompleto', true);
     
     return { success: true, message: 'Checklist atualizado com sucesso' };
@@ -6116,13 +6249,20 @@ function criarChecklistManualTeste() {
 // ═══════════════════════════════════════════════════════════════════════
 //                      GOOGLE CALENDAR - EXCLUIR EVENTO
 // ═══════════════════════════════════════════════════════════════════════
+//
+// ⚠️ DEPRECATED - DEAD CODE - NOT USED
+// This function is NOT called from anywhere in the codebase.
+// Calendar event deletion is now handled directly in updateChecklistCompleto()
+// Do NOT use this function. Keep for reference only.
+// ═══════════════════════════════════════════════════════════════════════
 
 /**
  * Exclui um evento do Google Calendar
  * Usado quando uma data de etapa é alterada
- * 
+ *
  * @param {string} eventoId - ID do evento
  * @returns {Object} {success, message}
+ * @deprecated Use updateChecklistCompleto() which handles event updates automatically
  */
 function excluirEventoCalendar(eventoId) {
   try {
@@ -6152,11 +6292,17 @@ function excluirEventoCalendar(eventoId) {
 // ═══════════════════════════════════════════════════════════════════════
 //                      GOOGLE CALENDAR - ATUALIZAR EVENTO
 // ═══════════════════════════════════════════════════════════════════════
+//
+// ⚠️ DEPRECATED - DEAD CODE - NOT USED
+// This function is NOT called from anywhere in the codebase.
+// Calendar event updates are now handled directly in updateChecklistCompleto()
+// Do NOT use this function. Keep for reference only.
+// ═══════════════════════════════════════════════════════════════════════
 
 /**
  * Atualiza a data de um evento existente
  * Exclui o evento antigo e cria um novo
- * 
+ *
  * @param {string} eventoIdAntigo - ID do evento a ser excluído
  * @param {string} idCampanha - ID da campanha
  * @param {string} etapa - Etapa do checklist
@@ -6164,6 +6310,7 @@ function excluirEventoCalendar(eventoId) {
  * @param {string} nomeInfluenciador - Nome do influenciador
  * @param {string} marca - Marca
  * @returns {Object} {success, novoEventoId, message}
+ * @deprecated Use updateChecklistCompleto() which handles event updates automatically
  */
 function atualizarEventoCalendar(eventoIdAntigo, idCampanha, etapa, novaData, nomeInfluenciador, marca) {
   try {
@@ -8807,6 +8954,13 @@ function excluirNota(id) {
 // ============================================================================
 // 5. GERENCIAMENTO DE EVENTOS DO CALENDAR (ATUALIZAÇÃO)
 // ============================================================================
+//
+// ⚠️ DEPRECATED - DEAD CODE - NOT USED - DUPLICATE DEFINITION
+// This is a DUPLICATE definition of atualizarEventoCalendar.
+// This function is NOT called from anywhere in the codebase.
+// Calendar event updates are now handled directly in updateChecklistCompleto()
+// Do NOT use this function. Keep for reference only.
+// ============================================================================
 
 /**
  * Atualiza um evento do calendar (exclui o antigo e cria novo)
@@ -8817,6 +8971,7 @@ function excluirNota(id) {
  * @param {string} nome - Nome do influenciador
  * @param {string} marca - Marca
  * @returns {object} {success, eventoId, message}
+ * @deprecated Use updateChecklistCompleto() which handles event updates automatically
  */
 function atualizarEventoCalendar(eventoIdAntigo, idCampanha, etapa, novaData, nome, marca) {
   try {
