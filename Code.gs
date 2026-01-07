@@ -3477,7 +3477,31 @@ function setupChecklistSheetComplete() {
 function criarChecklistCompleto(idCampanha, idAssessorado, nomeAssessorado, marca) {
   try {
     logInicio('criarChecklistCompleto - ID: ' + idCampanha);
-    
+
+    // ═══════════════════════════════════════════════════════════════
+    // VERIFICAR SE JÁ EXISTE CHECKLIST PARA ESTA CAMPANHA
+    // ═══════════════════════════════════════════════════════════════
+
+    Logger.log('🔍 Verificando se checklist já existe...');
+    const checklistExistente = getChecklistCompleto(idCampanha);
+
+    if (checklistExistente && checklistExistente.idCampanha === idCampanha) {
+      Logger.log('✅ Checklist já existe para campanha: ' + idCampanha);
+      Logger.log('⏭️  Pulando criação de checklist duplicado');
+      logFim('criarChecklistCompleto', true);
+
+      return {
+        success: true,
+        message: 'Checklist já existe (não duplicado)'
+      };
+    }
+
+    Logger.log('📝 Checklist não encontrado - prosseguindo com criação');
+
+    // ═══════════════════════════════════════════════════════════════
+    // CRIAR NOVO CHECKLIST
+    // ═══════════════════════════════════════════════════════════════
+
     const sheet = setupChecklistSheetComplete();
     const hoje = new Date();
     
@@ -4217,19 +4241,33 @@ function criarFinanceiroCompleto(idCampanha, idAssessorado, nomeAssessorado, mar
   try {
     logInicio('criarFinanceiroCompleto - ID: ' + idCampanha);
     Logger.log('💰 Valor Total: R$ ' + valorTotal.toFixed(2));
-    
-    const sheet = setupFinanceiroSheetComplete();
-    const hoje = new Date();
-    
-    // Verificar se já existe
+
+    // ═══════════════════════════════════════════════════════════════
+    // VERIFICAR SE JÁ EXISTE FINANCEIRO PARA ESTA CAMPANHA
+    // ═══════════════════════════════════════════════════════════════
+
+    Logger.log('🔍 Verificando se financeiro já existe...');
     const existente = getFinanceiroPorId(idCampanha);
+
     if (existente) {
-      Logger.log('⚠️ Financeiro já existe para esta campanha');
-      return { 
-        success: false, 
-        message: 'Financeiro já existe para esta campanha' 
+      Logger.log('✅ Financeiro já existe para campanha: ' + idCampanha);
+      Logger.log('⏭️  Pulando criação de financeiro duplicado');
+      logFim('criarFinanceiroCompleto', true);
+
+      return {
+        success: true,
+        message: 'Financeiro já existe (não duplicado)'
       };
     }
+
+    Logger.log('📝 Financeiro não encontrado - prosseguindo com criação');
+
+    // ═══════════════════════════════════════════════════════════════
+    // CRIAR NOVO FINANCEIRO
+    // ═══════════════════════════════════════════════════════════════
+
+    const sheet = setupFinanceiroSheetComplete();
+    const hoje = new Date();
     
     // Adicionar linha
     sheet.appendRow([
