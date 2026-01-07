@@ -3536,33 +3536,38 @@ function criarChecklistCompleto(idCampanha, idAssessorado, nomeAssessorado, marc
     // Buscar links das pastas Drive
     const linkPastaConteudo = buscarLinkPastaDriveCampanha(idCampanha, '03_CONTEUDO_APROVACAO');
     const linkPastaMetricas = buscarLinkPastaDriveCampanha(idCampanha, '05_METRICAS_RESULTADOS');
-    
-    // Criar array com 57 posições (todas as colunas)
-    const row = new Array(57).fill('');
-    
+
+    // Criar array com 62 posições (todas as colunas) - CORRIGIDO!
+    const row = new Array(62).fill('');
+
     // Identificação (1-4)
     row[0] = idCampanha;
     row[1] = idAssessorado;
     row[2] = nomeAssessorado;
     row[3] = marca;
-    
+
     // Conteúdo (28-30)
-    row[27] = 0;                      // Quantidade Conteúdos (inicialmente 0)
-    row[28] = '[]';                   // Conteúdos JSON (array vazio)
-    row[29] = linkPastaConteudo;      // Link Pasta Conteúdo
-    
-    // Métricas (38-40)
-    row[39] = linkPastaMetricas;      // Link Pasta Métricas
-    
-    // Repasse (49-54) - AUTO-CALCULADO
-    row[48] = valorTotal;             // Valor Total Campanha
-    row[49] = repasseInfluenciador;   // Repasse 80%
-    row[50] = taxaLitte;              // Taxa Littê 20%
-    row[51] = 'AGUARDANDO NF';        // Status Repasse
-    
-    // Metadata (55-57)
-    row[55] = hoje;                   // Data Criação
-    row[56] = hoje;                   // Última Atualização
+    row[27] = 0;                      // Col 28 - Quantidade Conteúdos (inicialmente 0)
+    row[28] = '[]';                   // Col 29 - Conteúdos JSON (array vazio)
+    row[29] = linkPastaConteudo;      // Col 30 - Link Pasta Conteúdo
+
+    // Métricas (51-53) - ÍNDICES CORRIGIDOS!
+    row[52] = linkPastaMetricas;      // Col 53 - Link Pasta Métricas
+
+    // Financeiro (54-55)
+    row[53] = valorTotal;             // Col 54 - Valor Total Campanha
+    row[54] = '';                     // Col 55 - Data Prev Pag Cliente (vazio inicial)
+
+    // Repasse (56-60) - ÍNDICES CORRIGIDOS!
+    row[55] = repasseInfluenciador;   // Col 56 - Repasse 80%
+    row[56] = taxaLitte;              // Col 57 - Taxa Littê 20%
+    row[57] = 'AGUARDANDO NF';        // Col 58 - Status Repasse
+    row[58] = '';                     // Col 59 - Data Repasse (vazio inicial)
+    row[59] = '';                     // Col 60 - Comprovante Repasse (vazio inicial)
+
+    // Metadata (61-62) - ÍNDICES CORRIGIDOS!
+    row[60] = hoje;                   // Col 61 - Data Criação
+    row[61] = hoje;                   // Col 62 - Última Atualização
     
     Logger.log('✅ Array criado com ' + row.length + ' posições');
     
@@ -3704,6 +3709,63 @@ function getChecklistCompleto(idCampanha) {
   } catch (e) {
     Logger.log('❌ getChecklistCompleto: ' + e);
     return null;
+  }
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════
+//                      GET CHECKLIST + ANDAMENTO (WRAPPER PARA HTML)
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * Wrapper function para buscar checklist com andamento
+ * Retorna formato compatível com o HTML: {success, checklist, andamento, message}
+ *
+ * @param {string} idCampanha - ID da campanha
+ * @returns {Object} {success, checklist, andamento, message}
+ */
+function getChecklistCompletoComAndamento(idCampanha) {
+  try {
+    logInicio('getChecklistCompletoComAndamento - ID: ' + idCampanha);
+
+    const checklist = getChecklistCompleto(idCampanha);
+
+    if (!checklist) {
+      Logger.log('❌ Checklist não encontrado');
+      logFim('getChecklistCompletoComAndamento', false);
+      return {
+        success: false,
+        message: 'Checklist não encontrado para campanha: ' + idCampanha
+      };
+    }
+
+    const andamento = getAndamento(idCampanha);
+
+    if (!andamento) {
+      Logger.log('⚠️ Andamento não encontrado, retornando só checklist');
+    }
+
+    Logger.log('✅ Checklist e andamento encontrados');
+    logFim('getChecklistCompletoComAndamento', true);
+
+    return {
+      success: true,
+      checklist: checklist,
+      andamento: andamento || {
+        idCampanha: idCampanha,
+        marca: checklist.marca || '',
+        nomeInfluenciador: checklist.nomeAssessorado || '',
+        valorFechado: checklist.valorTotalCampanha || 0
+      }
+    };
+
+  } catch (e) {
+    Logger.log('❌ ERRO em getChecklistCompletoComAndamento: ' + e);
+    logFim('getChecklistCompletoComAndamento', false);
+    return {
+      success: false,
+      message: e.toString()
+    };
   }
 }
 
