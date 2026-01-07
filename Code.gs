@@ -1947,6 +1947,63 @@ function getAndamento(idCampanha) {
 
 
 // ═══════════════════════════════════════════════════════════════════════
+//                      GET ANDAMENTO PARA EDIÇÃO (WRAPPER PARA HTML)
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * Wrapper function para buscar andamento para edição no modal HTML
+ * Retorna formato compatível com o HTML: {success, andamento, assessorado, message}
+ *
+ * @param {string} idCampanha - ID da campanha
+ * @returns {Object} {success, andamento, assessorado, message}
+ */
+function getAndamentoParaEdicao(idCampanha) {
+  try {
+    logInicio('getAndamentoParaEdicao - ID: ' + idCampanha);
+
+    const andamento = getAndamento(idCampanha);
+
+    if (!andamento) {
+      Logger.log('❌ Andamento não encontrado');
+      logFim('getAndamentoParaEdicao', false);
+      return {
+        success: false,
+        message: 'Campanha não encontrada: ' + idCampanha
+      };
+    }
+
+    // Buscar dados do assessorado
+    const assessorado = getAssessorado(andamento.idAssessorado);
+
+    if (!assessorado) {
+      Logger.log('⚠️ Assessorado não encontrado, continuando sem dados');
+    }
+
+    Logger.log('✅ Andamento encontrado para edição');
+    logFim('getAndamentoParaEdicao', true);
+
+    return {
+      success: true,
+      andamento: andamento,
+      assessorado: assessorado || {
+        id: andamento.idAssessorado,
+        nome: andamento.nomeInfluenciador || '',
+        instagram: ''
+      }
+    };
+
+  } catch (e) {
+    Logger.log('❌ ERRO em getAndamentoParaEdicao: ' + e);
+    logFim('getAndamentoParaEdicao', false);
+    return {
+      success: false,
+      message: e.toString()
+    };
+  }
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════
 //                      LISTAR PROSPECÇÕES ATIVAS
 // ═══════════════════════════════════════════════════════════════════════
 
@@ -9054,3 +9111,155 @@ function testarFuncoesWrappers() {
 // ============================================================================
 // FIM DO ARQUIVO 12_WRAPPERS.GS
 // ============================================================================
+
+
+// ============================================================================
+//                    PRÓXIMOS PRAZOS DO CHECKLIST
+// ============================================================================
+
+/**
+ * Busca os próximos prazos pendentes da aba Checklist_Complete
+ * Retorna no máximo 5 tarefas pendentes com data futura, ordenadas por data
+ *
+ * @returns {Array} Array com até 5 prazos: {idCampanha, marca, nomeAssessorado, tarefa, dataPrevista, diasRestantes, status}
+ */
+function getProximosPrazosChecklist() {
+  try {
+    const sheet = setupChecklistSheetComplete();
+
+    if (sheet.getLastRow() <= 1) {
+      return [];
+    }
+
+    const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 62).getValues();
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    const prazos = [];
+
+    // Definir prazos a verificar com suas colunas
+    const tarefas = [
+      {
+        nome: 'Assinatura Contrato',
+        colDataPrev: 6,  // Data Prev Assinatura
+        colStatus: 5,    // Status Contrato
+        colDataReal: 7,  // Data Real Assinatura
+        statusPendentes: ['Pendente', 'Em Análise', '']
+      },
+      {
+        nome: 'Envio Produto',
+        colDataPrev: 16, // Data Envio
+        colStatus: 15,   // Status Produto
+        colDataReal: null,
+        statusPendentes: ['Não Enviado', 'Pendente', '']
+      },
+      {
+        nome: 'Entrega Roteiro',
+        colDataPrev: 23, // Data Prev Roteiro
+        colStatus: 22,   // Status Roteiro
+        colDataReal: 24, // Data Real Roteiro
+        statusPendentes: ['Não Iniciado', 'Em Elaboração', 'Aguardando Aprovação', '']
+      },
+      {
+        nome: 'Postagem',
+        colDataPrev: 42, // Data Prev Postagem
+        colStatus: 39,   // Status Postagem
+        colDataReal: 44, // Data Real Postagem
+        statusPendentes: ['Não Postado', 'Agendado', '']
+      },
+      {
+        nome: 'Coleta Métricas',
+        colDataPrev: 51, // Data Prev Coleta Métricas
+        colStatus: 51,   // Status Métricas
+        colDataReal: null,
+        statusPendentes: ['Não Coletado', 'Pendente', '']
+      },
+      {
+        nome: 'Pagamento Cliente',
+        colDataPrev: 54, // Data Prev Pag Cliente
+        colStatus: null,
+        colDataReal: null,
+        statusPendentes: null // Sempre verificar se tem data
+      },
+      {
+        nome: 'Repasse Influenciador',
+        colDataPrev: 58, // Data Repasse
+        colStatus: 57,   // Status Repasse
+        colDataReal: null,
+        statusPendentes: ['Aguardando NF', 'Pronto para Repasse', '']
+      }
+    ];
+
+    // Processar cada checklist
+    data.forEach(function(row) {
+      const idCampanha = String(row[0] || '');
+      const idAssessorado = String(row[1] || '');
+      const nomeAssessorado = String(row[2] || '');
+      const marca = String(row[3] || '');
+
+      if (!idCampanha) return;
+
+      // Verificar cada tipo de tarefa
+      tarefas.forEach(function(tarefa) {
+        const dataPrevista = row[tarefa.colDataPrev];
+        const status = tarefa.colStatus !== null ? String(row[tarefa.colStatus] || '') : '';
+        const dataReal = tarefa.colDataReal !== null ? row[tarefa.colDataReal] : null;
+
+        // Verificar se há data prevista
+        if (!dataPrevista || !(dataPrevista instanceof Date)) return;
+
+        // Verificar se a data é futura
+        const dataPrevistaLimpa = new Date(dataPrevista);
+        dataPrevistaLimpa.setHours(0, 0, 0, 0);
+
+        if (dataPrevistaLimpa < hoje) return;
+
+        // Verificar se a tarefa está pendente
+        let isPendente = false;
+
+        // Se tem statusPendentes definidos, verificar se status está nessa lista
+        if (tarefa.statusPendentes !== null) {
+          isPendente = tarefa.statusPendentes.some(function(s) {
+            return status.toLowerCase().indexOf(s.toLowerCase()) !== -1 || s === '';
+          });
+        } else {
+          // Se não tem lista de status, considera pendente se tem data e não tem data real
+          isPendente = true;
+        }
+
+        // Se tem data real preenchida, não está pendente
+        if (dataReal && dataReal instanceof Date) {
+          isPendente = false;
+        }
+
+        if (!isPendente) return;
+
+        // Calcular dias restantes
+        const diffTime = dataPrevistaLimpa - hoje;
+        const diasRestantes = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        prazos.push({
+          idCampanha: idCampanha,
+          marca: marca,
+          nomeAssessorado: nomeAssessorado,
+          tarefa: tarefa.nome,
+          dataPrevista: formatDateToString(dataPrevista),
+          diasRestantes: diasRestantes,
+          status: status || 'Pendente'
+        });
+      });
+    });
+
+    // Ordenar por data (mais próximo primeiro)
+    prazos.sort(function(a, b) {
+      return a.diasRestantes - b.diasRestantes;
+    });
+
+    // Retornar no máximo 5
+    return prazos.slice(0, 5);
+
+  } catch (e) {
+    Logger.log('❌ Erro em getProximosPrazosChecklist: ' + e);
+    return [];
+  }
+}
