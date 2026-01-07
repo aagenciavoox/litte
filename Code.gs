@@ -8151,7 +8151,7 @@ function buscarLinkPastaDriveCampanha(idCampanha, nomeSubpasta) {
     let urlPastaDrive = '';
     for (let i = 1; i < data.length; i++) {
       if (data[i][0] === idCampanha) { // Coluna A: idCampanha
-        urlPastaDrive = data[i][21]; // Coluna V: urlPastaDrive
+        urlPastaDrive = data[i][11]; // Coluna L (12): Link Pasta Campanha
         break;
       }
     }
