@@ -336,6 +336,57 @@
                     templates: null,
                     notas: null,
                };
+               let modalState = {
+                    originalData: null,
+                    currentData: null,
+                    entityType: null,
+                    entityId: null,
+               };
+               function setModalState(entityType, entityId, data) {
+                    modalState.entityType = entityType;
+                    modalState.entityId = entityId;
+                    modalState.originalData = JSON.parse(JSON.stringify(data));
+                    modalState.currentData = JSON.parse(JSON.stringify(data));
+               }
+               function clearModalState() {
+                    modalState.originalData = null;
+                    modalState.currentData = null;
+                    modalState.entityType = null;
+                    modalState.entityId = null;
+               }
+               function getChangedFields(formData, originalData) {
+                    const changed = { id: modalState.entityId };
+                    let hasChanges = false;
+                    for (const [key, value] of formData.entries()) {
+                         if (key === "id") continue;
+                         const originalValue = originalData[key] || "";
+                         const newValue = value || "";
+                         if (originalValue !== newValue) {
+                              changed[key] = newValue;
+                              hasChanges = true;
+                         }
+                    }
+                    return hasChanges ? changed : null;
+               }
+               function updateCachedEntity(entityType, entityId, changedData) {
+                    if (!cachedData[entityType]) return;
+                    const index = cachedData[entityType].findIndex(function (item) {
+                         return item.id === entityId || item.idCampanha === entityId;
+                    });
+                    if (index !== -1) {
+                         for (const key in changedData) {
+                              if (key !== "id") {
+                                   cachedData[entityType][index][key] = changedData[key];
+                              }
+                         }
+                    }
+               }
+               function getCachedEntity(entityType, entityId) {
+                    if (!cachedData[entityType]) return null;
+                    return cachedData[entityType].find(function (item) {
+                         return item.id === entityId || item.idCampanha === entityId;
+                    });
+               }
                function showLoading(text = "Carregando...") {
                     document.getElementById("loading-text").textContent = text;
                     document.getElementById("loading-overlay").classList.remove("hidden");
@@ -746,11 +797,18 @@
                          .criarAssessorado(dados);
                }
                function editarAssessorado(id) {
+                    const cached = getCachedEntity("assessorados", id);
+                    if (cached) {
+                         setModalState("assessorados", id, cached);
+                         renderModalEditarAssessorado(cached);
+                         return;
+                    }
                     showLoading("Carregando dados...");
                     google.script.run
                          .withSuccessHandler(function (assessorado) {
                               hideLoading();
                               if (assessorado) {
+                                   setModalState("assessorados", id, assessorado);
                                    renderModalEditarAssessorado(assessorado);
                               } else {
                                    showToast("❌ Assessorado não encontrado", "error");
@@ -772,71 +830,57 @@
                     event.preventDefault();
                     const form = event.target;
                     const formData = new FormData(form);
-                    const dados = {
-                         id: formData.get("id"),
-                         nome: formData.get("nome"),
-                         usuario: formData.get("usuario"),
-                         email: formData.get("email"),
-                         telefone: formData.get("telefone"),
-                         idade: formData.get("idade"),
-                         sapato: formData.get("sapato"),
-                         camiseta: formData.get("camiseta"),
-                         calca: formData.get("calca"),
-                         enderecoNome: formData.get("enderecoNome"),
-                         rua: formData.get("rua"),
-                         numero: formData.get("numero"),
-                         complemento: formData.get("complemento"),
-                         bairro: formData.get("bairro"),
-                         cidade: formData.get("cidade"),
-                         estado: formData.get("estado"),
-                         cep: formData.get("cep"),
-                         observacoes: formData.get("observacoes"),
-                         cpf: formData.get("cpf"),
-                         rg: formData.get("rg"),
-                         cnpj: formData.get("cnpj"),
-                         testemunhaNome: formData.get("testemunhaNome"),
-                         testemunhaEmail: formData.get("testemunhaEmail"),
-                         testemunhaTelefone: formData.get("testemunhaTelefone"),
-                         testemunhaCpf: formData.get("testemunhaCpf"),
-                         testemunhaRg: formData.get("testemunhaRg"),
-                         pjRazaoSocial: formData.get("pjRazaoSocial"),
-                         pjCnpj: formData.get("pjCnpj"),
-                         pjDataCriacao: formData.get("pjDataCriacao"),
-                         pjEndereco: formData.get("pjEndereco"),
-                         pjEmail: formData.get("pjEmail"),
-                         pjInscricaoMunicipal: formData.get("pjInscricaoMunicipal"),
-                         pjInscricaoEstadual: formData.get("pjInscricaoEstadual"),
-                         bancoTipo: formData.get("bancoTipo"),
-                         bancoNome: formData.get("bancoNome"),
-                         bancoAgencia: formData.get("bancoAgencia"),
-                         bancoConta: formData.get("bancoConta"),
-                         bancoPix: formData.get("bancoPix"),
-                    };
+                    const changedFields = getChangedFields(formData, modalState.originalData);
+                    if (!changedFields) {
+                         closeModal("modal-editar-assessorado");
+                         showToast("ℹ️ Nenhuma alteração detectada", "info");
+                         clearModalState();
+                         return;
+                    }
+                    const submitBtn = form.querySelector('button[type="submit"]');
+                    const originalText = submitBtn.innerHTML;
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i data-lucide="loader" class="w-4 h-4 inline animate-spin"></i> Salvando...';
+                    lucide.createIcons();
                     google.script.run
                          .withSuccessHandler(function (result) {
+                              submitBtn.disabled = false;
+                              submitBtn.innerHTML = originalText;
+                              lucide.createIcons();
                               if (result.success) {
                                    closeModal("modal-editar-assessorado");
                                    showToast("✅ Assessorado atualizado!", "success");
-                                   cachedData.assessorados = null;
-                                   setTimeout(function () {
-                                        renderAssessorados();
-                                   }, 500);
+                                   updateCachedEntity("assessorados", modalState.entityId, changedFields);
+                                   clearModalState();
+                                   if (currentView === "assessorados") {
+                                        renderTabelaAssessorados(cachedData.assessorados);
+                                   }
                               } else {
                                    showToast("❌ Erro: " + result.message, "error");
                               }
                          })
                          .withFailureHandler(function (error) {
+                              submitBtn.disabled = false;
+                              submitBtn.innerHTML = originalText;
+                              lucide.createIcons();
                               showToast("❌ Erro ao salvar", "error");
                               console.error(error);
                          })
-                         .atualizarAssessorado(dados);
+                         .atualizarAssessorado(changedFields);
                }
                function verDetalhesAssessorado(id) {
+                    const cached = getCachedEntity("assessorados", id);
+                    if (cached) {
+                         setModalState("assessorados", id, cached);
+                         renderModalDetalhesAssessorado(cached);
+                         return;
+                    }
                     showLoading("Carregando informações...");
                     google.script.run
                          .withSuccessHandler(function (assessorado) {
                               hideLoading();
                               if (assessorado) {
+                                   setModalState("assessorados", id, assessorado);
                                    renderModalDetalhesAssessorado(assessorado);
                               } else {
                                    showToast("❌ Assessorado não encontrado", "error");
@@ -873,8 +917,7 @@
                     }
                }
                function salvarInfoPessoaisAssessorado(id) {
-                    const dados = {
-                         id: id,
+                    const currentData = {
                          cpf: document.getElementById("edit-cpf").value,
                          rg: document.getElementById("edit-rg").value,
                          cnpj: document.getElementById("edit-cnpj").value,
@@ -896,6 +939,20 @@
                          bancoConta: document.getElementById("edit-bancoConta").value,
                          bancoPix: document.getElementById("edit-bancoPix").value,
                     };
+                    const changedFields = { id: id };
+                    let hasChanges = false;
+                    for (const key in currentData) {
+                         const originalValue = modalState.originalData[key] || "";
+                         const newValue = currentData[key] || "";
+                         if (originalValue !== newValue) {
+                              changedFields[key] = newValue;
+                              hasChanges = true;
+                         }
+                    }
+                    if (!hasChanges) {
+                         showToast("ℹ️ Nenhuma alteração detectada", "info");
+                         return;
+                    }
                     const saveBtn = event.target;
                     const originalHTML = saveBtn.innerHTML;
                     saveBtn.disabled = true;
@@ -908,7 +965,12 @@
                               lucide.createIcons();
                               if (result.success) {
                                    showToast("✅ Informações salvas com sucesso!", "success");
-                                   cachedData.assessorados = null;
+                                   updateCachedEntity("assessorados", id, changedFields);
+                                   for (const key in changedFields) {
+                                        if (key !== "id" && modalState.originalData) {
+                                             modalState.originalData[key] = changedFields[key];
+                                        }
+                                   }
                               } else {
                                    showToast("❌ Erro: " + result.message, "error");
                               }
@@ -920,7 +982,7 @@
                               showToast("❌ Erro ao salvar informações", "error");
                               console.error(error);
                          })
-                         .atualizarAssessorado(dados);
+                         .atualizarAssessorado(changedFields);
                }
                function inativarAssessorado(id) {
                     if (!confirm("Tem certeza que deseja inativar este assessorado? Ele não será excluído, apenas marcado como inativo.")) {
