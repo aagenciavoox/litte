@@ -3934,30 +3934,44 @@ function removerConteudoChecklist(idCampanha, idConteudo) {
  */
 function buscarLinkPastaDriveCampanha(idCampanha, nomeSubpasta) {
   try {
-    // Buscar andamento para pegar link da pasta mãe
-    const andamento = getAndamento(idCampanha);
-    if (!andamento || !andamento.linkPastaCampanha) {
+    const sheet = SHEETS.andamentos;
+    const data = sheet.getDataRange().getValues();
+
+    // Buscar andamento pelo ID da campanha
+    let urlPastaDrive = '';
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] === idCampanha) { // Coluna A: idCampanha
+        urlPastaDrive = data[i][11]; // Coluna L: linkPastaCampanha
+        break;
+      }
+    }
+
+    if (!urlPastaDrive) {
       return '';
     }
-    
+
+    // Se não especificou subpasta, retorna a pasta principal
+    if (!nomeSubpasta || nomeSubpasta === '') {
+      return urlPastaDrive;
+    }
+
     // Extrair ID da pasta mãe da URL
-    const urlPastaMae = andamento.linkPastaCampanha;
-    const match = urlPastaMae.match(/folders\/([a-zA-Z0-9-_]+)/);
-    
+    const match = urlPastaDrive.match(/folders\/([a-zA-Z0-9-_]+)/);
+
     if (!match) return '';
-    
+
     const idPastaMae = match[1];
-    
+
     // Buscar subpasta
     const pastaMae = DriveApp.getFolderById(idPastaMae);
     const subpastas = pastaMae.getFoldersByName(nomeSubpasta);
-    
+
     if (subpastas.hasNext()) {
       return subpastas.next().getUrl();
     }
-    
+
     return '';
-    
+
   } catch (e) {
     Logger.log('⚠️ buscarLinkPastaDriveCampanha: ' + e);
     return '';
