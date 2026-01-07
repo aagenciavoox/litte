@@ -1236,12 +1236,18 @@
                                    document.querySelector('[name="linkPastaConteudo"]').value = result.url;
                               }
                          })
+                         .withFailureHandler(function (error) {
+                              console.error("Erro ao carregar link da pasta de conteúdo:", error);
+                         })
                          .buscarLinkPastaDriveCampanha(idCampanha, "03_CONTEUDO_APROVACAO");
                     google.script.run
                          .withSuccessHandler(function (result) {
                               if (result.success && result.url) {
                                    document.querySelector('[name="linkPastaMetricas"]').value = result.url;
                               }
+                         })
+                         .withFailureHandler(function (error) {
+                              console.error("Erro ao carregar link da pasta de métricas:", error);
                          })
                          .buscarLinkPastaDriveCampanha(idCampanha, "05_METRICAS_RESULTADOS");
                }
@@ -1313,50 +1319,52 @@
                          idCampanha: formData.get("idCampanha"),
                          precisaContrato: formData.get("precisaContrato"),
                          statusContrato: formData.get("statusContrato"),
-                         contratoDataPrevista: formData.get("contratoDataPrevista"),
-                         contratoDataReal: formData.get("contratoDataReal"),
-                         contratoLink: formData.get("contratoLink"),
-                         contratoObservacoes: formData.get("contratoObservacoes"),
+                         dataPrevAssinaturaContrato: formData.get("contratoDataPrevista"),
+                         dataRealAssinaturaContrato: formData.get("contratoDataReal"),
+                         linkContrato: formData.get("contratoLink"),
+                         obsContrato: formData.get("contratoObservacoes"),
                          precisaProduto: formData.get("precisaProduto"),
-                         produtoNome: formData.get("produtoNome"),
-                         produtoQuantidade: formData.get("produtoQuantidade"),
+                         nomeProduto: formData.get("produtoNome"),
+                         quantidade: formData.get("produtoQuantidade"),
                          produtoStatus: formData.get("produtoStatus"),
-                         produtoEnderecoEnvio: formData.get("produtoEnderecoEnvio"),
-                         produtoDataEnvio: formData.get("produtoDataEnvio"),
-                         produtoCodigoRastreio: formData.get("produtoCodigoRastreio"),
-                         produtoLinkRastreamento: formData.get("produtoLinkRastreamento"),
+                         enderecoEnvio: formData.get("produtoEnderecoEnvio"),
+                         dataEnvioProduto: formData.get("produtoDataEnvio"),
+                         codigoRastreio: formData.get("produtoCodigoRastreio"),
+                         linkRastreamento: formData.get("produtoLinkRastreamento"),
                          precisaRoteiro: formData.get("precisaRoteiro"),
-                         roteiroTipo: formData.get("roteiroTipo"),
-                         roteiroStatus: formData.get("roteiroStatus"),
-                         roteiroDataPrevista: formData.get("roteiroDataPrevista"),
-                         roteiroDataReal: formData.get("roteiroDataReal"),
-                         roteiroDataAprovacao: formData.get("roteiroDataAprovacao"),
-                         roteiroPastaGoogleDocs: formData.get("roteiroPastaGoogleDocs"),
-                         roteiroFeedbackCliente: formData.get("roteiroFeedbackCliente"),
+                         tipoRoteiro: formData.get("roteiroTipo"),
+                         numeroVersoes: "",
+                         statusRoteiro: formData.get("roteiroStatus"),
+                         dataPrevRoteiro: formData.get("roteiroDataPrevista"),
+                         dataRealRoteiro: formData.get("roteiroDataReal"),
+                         dataAprovRoteiro: formData.get("roteiroDataAprovacao"),
+                         linkPastaRoteiro: formData.get("roteiroPastaGoogleDocs"),
+                         feedbackClienteRoteiro: formData.get("roteiroFeedbackCliente"),
                          quantidadeConteudos: formData.get("quantidadeConteudos"),
                          conteudosJSON: JSON.stringify(conteudos),
-                         postagemStatus: formData.get("postagemStatus"),
-                         postagemRedeSocial: formData.get("postagemRedeSocial"),
-                         postagemTipo: formData.get("postagemTipo"),
-                         postagemData: formData.get("postagemData"),
-                         postagemHorario: formData.get("postagemHorario"),
-                         postagemLink: formData.get("postagemLink"),
-                         metricasDataPrevista: formData.get("metricasDataPrevista"),
-                         metricasStatus: formData.get("metricasStatus"),
-                         nfStatus: formData.get("nfStatus"),
-                         nfTipo: formData.get("nfTipo"),
-                         nfNumero: formData.get("nfNumero"),
-                         nfCnpjEmissor: formData.get("nfCnpjEmissor"),
-                         nfDataEmissao: formData.get("nfDataEmissao"),
-                         nfDataPrevistaPagamento: formData.get("nfDataPrevistaPagamento"),
-                         nfValor: formData.get("nfValor"),
-                         nfLinkPdf: formData.get("nfLinkPdf"),
+                         statusPostagem: formData.get("postagemStatus"),
+                         redeSocial: formData.get("postagemRedeSocial"),
+                         tipoPost: formData.get("postagemTipo"),
+                         dataPrevPostagem: formData.get("postagemData"),
+                         dataRealPostagem: "",
+                         horarioPostagem: formData.get("postagemHorario"),
+                         linkPostagem: formData.get("postagemLink"),
+                         dataPrevColetaMetricas: formData.get("metricasDataPrevista"),
+                         statusMetricas: formData.get("metricasStatus"),
+                         statusNF: formData.get("nfStatus"),
+                         tipoNF: formData.get("nfTipo"),
+                         numeroNF: formData.get("nfNumero"),
+                         cnpj: formData.get("nfCnpjEmissor"),
+                         dataEmissaoNF: formData.get("nfDataEmissao"),
+                         dataPrevPagamento: formData.get("nfDataPrevistaPagamento"),
+                         valorNF: formData.get("nfValor"),
+                         linkPdfNF: formData.get("nfLinkPdf"),
                          repasseValorTotal: formData.get("repasseValorTotal"),
                          repasseInfluenciador: formData.get("repasseInfluenciador"),
                          repasseTaxaLitte: formData.get("repasseTaxaLitte"),
-                         repasseStatus: formData.get("repasseStatus"),
-                         repasseData: formData.get("repasseData"),
-                         repasseLinkComprovante: formData.get("repasseLinkComprovante"),
+                         statusRepasse: formData.get("repasseStatus"),
+                         dataRepasse: formData.get("repasseData"),
+                         comprovanteRepasse: formData.get("repasseLinkComprovante"),
                          observacoesCampanha: formData.get("observacoesCampanha"),
                     };
                     showLoading("Salvando checklist...");

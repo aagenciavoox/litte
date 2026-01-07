@@ -2337,9 +2337,15 @@ function atualizarAndamento(dados) {
     // ═══════════════════════════════════════════════════════════════
     // DETECÇÃO: STATUS MUDOU PARA "FECHADO"?
     // ═══════════════════════════════════════════════════════════════
-    
-    if (dados.statusDetalhado === 'Fechado' && statusAntigo !== 'Fechado') {
-      
+
+    // Normalizar strings para comparação robusta
+    const statusAntigoStr = String(statusAntigo || '').trim();
+    const statusNovoStr = String(dados.statusDetalhado || '').trim();
+
+    // Só executar automações se status está MUDANDO PARA "Fechado"
+    // (não re-executar se já estava "Fechado")
+    if (statusNovoStr === 'Fechado' && statusAntigoStr !== 'Fechado') {
+
       Logger.log('');
       Logger.log('🎯🎯🎯 STATUS MUDOU PARA FECHADO! 🎯🎯🎯');
       Logger.log('🚀 Iniciando automações...');
@@ -2447,16 +2453,21 @@ function atualizarAndamento(dados) {
       
       Logger.log('');
       Logger.log('🎉🎉🎉 TODAS AS AUTOMAÇÕES CONCLUÍDAS! 🎉🎉🎉');
+    } else if (statusNovoStr === 'Fechado' && statusAntigoStr === 'Fechado') {
+      Logger.log('');
+      Logger.log('ℹ️  Campanha já estava "Fechado" - automações não re-executadas');
+      Logger.log('✅ Edição permitida sem duplicar estruturas');
+      Logger.log('');
     }
-    
+
     // Registrar histórico
     registrarHistorico(
       'Andamento',
       dados.idCampanha,
       'Atualizou',
       'Sistema',
-      statusAntigo,
-      dados.statusDetalhado || statusAntigo,
+      statusAntigoStr,
+      statusNovoStr || statusAntigoStr,
       'Andamento atualizado'
     );
     
@@ -3466,7 +3477,31 @@ function setupChecklistSheetComplete() {
 function criarChecklistCompleto(idCampanha, idAssessorado, nomeAssessorado, marca) {
   try {
     logInicio('criarChecklistCompleto - ID: ' + idCampanha);
-    
+
+    // ═══════════════════════════════════════════════════════════════
+    // VERIFICAR SE JÁ EXISTE CHECKLIST PARA ESTA CAMPANHA
+    // ═══════════════════════════════════════════════════════════════
+
+    Logger.log('🔍 Verificando se checklist já existe...');
+    const checklistExistente = getChecklistCompleto(idCampanha);
+
+    if (checklistExistente && checklistExistente.idCampanha === idCampanha) {
+      Logger.log('✅ Checklist já existe para campanha: ' + idCampanha);
+      Logger.log('⏭️  Pulando criação de checklist duplicado');
+      logFim('criarChecklistCompleto', true);
+
+      return {
+        success: true,
+        message: 'Checklist já existe (não duplicado)'
+      };
+    }
+
+    Logger.log('📝 Checklist não encontrado - prosseguindo com criação');
+
+    // ═══════════════════════════════════════════════════════════════
+    // CRIAR NOVO CHECKLIST
+    // ═══════════════════════════════════════════════════════════════
+
     const sheet = setupChecklistSheetComplete();
     const hoje = new Date();
     
@@ -4206,19 +4241,33 @@ function criarFinanceiroCompleto(idCampanha, idAssessorado, nomeAssessorado, mar
   try {
     logInicio('criarFinanceiroCompleto - ID: ' + idCampanha);
     Logger.log('💰 Valor Total: R$ ' + valorTotal.toFixed(2));
-    
-    const sheet = setupFinanceiroSheetComplete();
-    const hoje = new Date();
-    
-    // Verificar se já existe
+
+    // ═══════════════════════════════════════════════════════════════
+    // VERIFICAR SE JÁ EXISTE FINANCEIRO PARA ESTA CAMPANHA
+    // ═══════════════════════════════════════════════════════════════
+
+    Logger.log('🔍 Verificando se financeiro já existe...');
     const existente = getFinanceiroPorId(idCampanha);
+
     if (existente) {
-      Logger.log('⚠️ Financeiro já existe para esta campanha');
-      return { 
-        success: false, 
-        message: 'Financeiro já existe para esta campanha' 
+      Logger.log('✅ Financeiro já existe para campanha: ' + idCampanha);
+      Logger.log('⏭️  Pulando criação de financeiro duplicado');
+      logFim('criarFinanceiroCompleto', true);
+
+      return {
+        success: true,
+        message: 'Financeiro já existe (não duplicado)'
       };
     }
+
+    Logger.log('📝 Financeiro não encontrado - prosseguindo com criação');
+
+    // ═══════════════════════════════════════════════════════════════
+    // CRIAR NOVO FINANCEIRO
+    // ═══════════════════════════════════════════════════════════════
+
+    const sheet = setupFinanceiroSheetComplete();
+    const hoje = new Date();
     
     // Adicionar linha
     sheet.appendRow([
@@ -5068,7 +5117,37 @@ function criarEstruturaDriveCampanha(idCampanha, nomeInfluenciador, marca, objet
     Logger.log('👤 Influenciador: ' + nomeInfluenciador);
     Logger.log('🏢 Marca: ' + marca);
     Logger.log('📝 Objeto: ' + objeto);
-    
+
+    // ═══════════════════════════════════════════════════════════════
+    // VERIFICAR SE JÁ EXISTE LINK DA PASTA NA PLANILHA
+    // ═══════════════════════════════════════════════════════════════
+
+    Logger.log('🔍 Verificando se pasta já existe...');
+    const sheet = setupAndamentosSheet();
+    const rowNum = findRowById(sheet, idCampanha);
+
+    if (rowNum) {
+      const linkExistente = sheet.getRange(rowNum, 12).getValue();
+
+      if (linkExistente && linkExistente.toString().trim() !== '') {
+        Logger.log('✅ Pasta já existe: ' + linkExistente);
+        Logger.log('⏭️  Pulando criação de pasta duplicada');
+        logFim('criarEstruturaDriveCampanha', true);
+
+        return {
+          success: true,
+          urlPastaCampanha: linkExistente,
+          message: 'Pasta já existe (não duplicada)'
+        };
+      }
+
+      Logger.log('📝 Coluna 12 vazia - prosseguindo com criação');
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // CRIAR ESTRUTURA DRIVE
+    // ═══════════════════════════════════════════════════════════════
+
     const props = PropertiesService.getScriptProperties();
     const pastaAssessoradosId = props.getProperty('PASTA_ASSESSORADOS');
     
@@ -8121,7 +8200,7 @@ function buscarLinkPastaDriveCampanha(idCampanha, nomeSubpasta) {
     let urlPastaDrive = '';
     for (let i = 1; i < data.length; i++) {
       if (data[i][0] === idCampanha) { // Coluna A: idCampanha
-        urlPastaDrive = data[i][21]; // Coluna V: urlPastaDrive
+        urlPastaDrive = data[i][11]; // Coluna L (12): Link Pasta Campanha
         break;
       }
     }
