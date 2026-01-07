@@ -1236,12 +1236,18 @@
                                    document.querySelector('[name="linkPastaConteudo"]').value = result.url;
                               }
                          })
+                         .withFailureHandler(function (error) {
+                              console.error("Erro ao carregar link da pasta de conteúdo:", error);
+                         })
                          .buscarLinkPastaDriveCampanha(idCampanha, "03_CONTEUDO_APROVACAO");
                     google.script.run
                          .withSuccessHandler(function (result) {
                               if (result.success && result.url) {
                                    document.querySelector('[name="linkPastaMetricas"]').value = result.url;
                               }
+                         })
+                         .withFailureHandler(function (error) {
+                              console.error("Erro ao carregar link da pasta de métricas:", error);
                          })
                          .buscarLinkPastaDriveCampanha(idCampanha, "05_METRICAS_RESULTADOS");
                }
