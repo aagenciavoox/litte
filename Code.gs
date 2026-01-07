@@ -1947,6 +1947,63 @@ function getAndamento(idCampanha) {
 
 
 // ═══════════════════════════════════════════════════════════════════════
+//                      GET ANDAMENTO PARA EDIÇÃO (WRAPPER PARA HTML)
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * Wrapper function para buscar andamento para edição no modal HTML
+ * Retorna formato compatível com o HTML: {success, andamento, assessorado, message}
+ *
+ * @param {string} idCampanha - ID da campanha
+ * @returns {Object} {success, andamento, assessorado, message}
+ */
+function getAndamentoParaEdicao(idCampanha) {
+  try {
+    logInicio('getAndamentoParaEdicao - ID: ' + idCampanha);
+
+    const andamento = getAndamento(idCampanha);
+
+    if (!andamento) {
+      Logger.log('❌ Andamento não encontrado');
+      logFim('getAndamentoParaEdicao', false);
+      return {
+        success: false,
+        message: 'Campanha não encontrada: ' + idCampanha
+      };
+    }
+
+    // Buscar dados do assessorado
+    const assessorado = getAssessorado(andamento.idAssessorado);
+
+    if (!assessorado) {
+      Logger.log('⚠️ Assessorado não encontrado, continuando sem dados');
+    }
+
+    Logger.log('✅ Andamento encontrado para edição');
+    logFim('getAndamentoParaEdicao', true);
+
+    return {
+      success: true,
+      andamento: andamento,
+      assessorado: assessorado || {
+        id: andamento.idAssessorado,
+        nome: andamento.nomeInfluenciador || '',
+        instagram: ''
+      }
+    };
+
+  } catch (e) {
+    Logger.log('❌ ERRO em getAndamentoParaEdicao: ' + e);
+    logFim('getAndamentoParaEdicao', false);
+    return {
+      success: false,
+      message: e.toString()
+    };
+  }
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════
 //                      LISTAR PROSPECÇÕES ATIVAS
 // ═══════════════════════════════════════════════════════════════════════
 
