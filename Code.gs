@@ -1204,9 +1204,9 @@ function getAllAssessorados() {
   try {
     const sheet = setupAssessoradosSheet();
     if (sheet.getLastRow() <= 1) return [];
-   
-    const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 24).getValues();
-   
+
+    const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 44).getValues();
+
     return data.filter(function(row) { return row[0]; }).map(function(row) {
       return {
         id: String(row[0] || ''),
@@ -1232,7 +1232,27 @@ function getAllAssessorados() {
         urlPastaDrive: String(row[20] || ''),
         linkPlanilhaEspelho: String(row[21] || ''),
         dataCriacao: row[22] ? formatDateToISO(row[22]) : '',
-        ultimaAtualizacao: row[23] ? formatDateToISO(row[23]) : ''
+        ultimaAtualizacao: row[23] ? formatDateToISO(row[23]) : '',
+        cpf: String(row[24] || ''),
+        rg: String(row[25] || ''),
+        cnpj: String(row[26] || ''),
+        testemunhaNome: String(row[27] || ''),
+        testemunhaEmail: String(row[28] || ''),
+        testemunhaTelefone: String(row[29] || ''),
+        testemunhaCpf: String(row[30] || ''),
+        testemunhaRg: String(row[31] || ''),
+        pjRazaoSocial: String(row[32] || ''),
+        pjCnpj: String(row[33] || ''),
+        pjDataCriacao: String(row[34] || ''),
+        pjEndereco: String(row[35] || ''),
+        pjEmail: String(row[36] || ''),
+        pjInscricaoMunicipal: String(row[37] || ''),
+        pjInscricaoEstadual: String(row[38] || ''),
+        bancoTipo: String(row[39] || ''),
+        bancoNome: String(row[40] || ''),
+        bancoAgencia: String(row[41] || ''),
+        bancoConta: String(row[42] || ''),
+        bancoPix: String(row[43] || '')
       };
     });
   } catch (e) {
@@ -1307,7 +1327,7 @@ function criarAssessorado(dados) {
       return { success: false, message: 'Nome e Usuário são obrigatórios' };
     }
    
-    // Adicionar linha com TODOS os 24 campos
+    // Adicionar linha com TODOS os 44 campos
     sheet.appendRow([
       id,                             // 1. ID
       dados.nome,                     // 2. Nome
@@ -1332,7 +1352,27 @@ function criarAssessorado(dados) {
       '',                             // 21. URL Pasta Drive (será preenchido)
       '',                             // 22. Link Planilha Espelho (será preenchido)
       hoje,                           // 23. Data Criacao
-      hoje                            // 24. Ultima Atualizacao
+      hoje,                           // 24. Ultima Atualizacao
+      dados.cpf || '',                // 25. CPF
+      dados.rg || '',                 // 26. RG
+      dados.cnpj || '',               // 27. CNPJ
+      dados.testemunhaNome || '',     // 28. Testemunha Nome
+      dados.testemunhaEmail || '',    // 29. Testemunha Email
+      dados.testemunhaTelefone || '', // 30. Testemunha Telefone
+      dados.testemunhaCpf || '',      // 31. Testemunha CPF
+      dados.testemunhaRg || '',       // 32. Testemunha RG
+      dados.pjRazaoSocial || '',      // 33. PJ Razão Social
+      dados.pjCnpj || '',             // 34. PJ CNPJ
+      dados.pjDataCriacao || '',      // 35. PJ Data Criação
+      dados.pjEndereco || '',         // 36. PJ Endereço
+      dados.pjEmail || '',            // 37. PJ Email
+      dados.pjInscricaoMunicipal || '', // 38. PJ Inscrição Municipal
+      dados.pjInscricaoEstadual || '',  // 39. PJ Inscrição Estadual
+      dados.bancoTipo || '',          // 40. Banco Tipo (PF/PJ)
+      dados.bancoNome || '',          // 41. Banco Nome
+      dados.bancoAgencia || '',       // 42. Banco Agência
+      dados.bancoConta || '',         // 43. Banco Conta
+      dados.bancoPix || ''            // 44. Banco PIX
     ]);
    
     SpreadsheetApp.flush();
@@ -1460,7 +1500,7 @@ function atualizarAssessorado(dados) {
     const hoje = new Date();
    
     // Buscar valores antigos para histórico
-    const valoresAntigos = sheet.getRange(rowNum, 1, 1, 24).getValues()[0];
+    const valoresAntigos = sheet.getRange(rowNum, 1, 1, 44).getValues()[0];
     const nomeAntigo = valoresAntigos[1];
    
     // Atualizar campos (apenas os que foram enviados)
@@ -1492,7 +1532,35 @@ function atualizarAssessorado(dados) {
     if (dados.observacoes !== undefined) sheet.getRange(rowNum, 20).setValue(dados.observacoes);
     if (dados.urlPastaDrive !== undefined) sheet.getRange(rowNum, 21).setValue(dados.urlPastaDrive);
     if (dados.linkPlanilhaEspelho !== undefined) sheet.getRange(rowNum, 22).setValue(dados.linkPlanilhaEspelho);
-   
+
+    // Novos campos - Dados Pessoais
+    if (dados.cpf !== undefined) sheet.getRange(rowNum, 25).setValue(dados.cpf);
+    if (dados.rg !== undefined) sheet.getRange(rowNum, 26).setValue(dados.rg);
+    if (dados.cnpj !== undefined) sheet.getRange(rowNum, 27).setValue(dados.cnpj);
+
+    // Novos campos - Testemunha
+    if (dados.testemunhaNome !== undefined) sheet.getRange(rowNum, 28).setValue(dados.testemunhaNome);
+    if (dados.testemunhaEmail !== undefined) sheet.getRange(rowNum, 29).setValue(dados.testemunhaEmail);
+    if (dados.testemunhaTelefone !== undefined) sheet.getRange(rowNum, 30).setValue(dados.testemunhaTelefone);
+    if (dados.testemunhaCpf !== undefined) sheet.getRange(rowNum, 31).setValue(dados.testemunhaCpf);
+    if (dados.testemunhaRg !== undefined) sheet.getRange(rowNum, 32).setValue(dados.testemunhaRg);
+
+    // Novos campos - Pessoa Jurídica
+    if (dados.pjRazaoSocial !== undefined) sheet.getRange(rowNum, 33).setValue(dados.pjRazaoSocial);
+    if (dados.pjCnpj !== undefined) sheet.getRange(rowNum, 34).setValue(dados.pjCnpj);
+    if (dados.pjDataCriacao !== undefined) sheet.getRange(rowNum, 35).setValue(dados.pjDataCriacao);
+    if (dados.pjEndereco !== undefined) sheet.getRange(rowNum, 36).setValue(dados.pjEndereco);
+    if (dados.pjEmail !== undefined) sheet.getRange(rowNum, 37).setValue(dados.pjEmail);
+    if (dados.pjInscricaoMunicipal !== undefined) sheet.getRange(rowNum, 38).setValue(dados.pjInscricaoMunicipal);
+    if (dados.pjInscricaoEstadual !== undefined) sheet.getRange(rowNum, 39).setValue(dados.pjInscricaoEstadual);
+
+    // Novos campos - Conta Bancária
+    if (dados.bancoTipo !== undefined) sheet.getRange(rowNum, 40).setValue(dados.bancoTipo);
+    if (dados.bancoNome !== undefined) sheet.getRange(rowNum, 41).setValue(dados.bancoNome);
+    if (dados.bancoAgencia !== undefined) sheet.getRange(rowNum, 42).setValue(dados.bancoAgencia);
+    if (dados.bancoConta !== undefined) sheet.getRange(rowNum, 43).setValue(dados.bancoConta);
+    if (dados.bancoPix !== undefined) sheet.getRange(rowNum, 44).setValue(dados.bancoPix);
+
     // Atualizar data de última atualização (sempre)
     sheet.getRange(rowNum, 24).setValue(hoje);
    
