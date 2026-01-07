@@ -1326,14 +1326,14 @@
                          precisaProduto: formData.get("precisaProduto"),
                          nomeProduto: formData.get("produtoNome"),
                          quantidade: formData.get("produtoQuantidade"),
-                         produtoStatus: formData.get("produtoStatus"),
+                         statusProduto: formData.get("produtoStatus"),
                          enderecoEnvio: formData.get("produtoEnderecoEnvio"),
                          dataEnvioProduto: formData.get("produtoDataEnvio"),
                          codigoRastreio: formData.get("produtoCodigoRastreio"),
                          linkRastreamento: formData.get("produtoLinkRastreamento"),
                          precisaRoteiro: formData.get("precisaRoteiro"),
                          tipoRoteiro: formData.get("roteiroTipo"),
-                         numeroVersoes: "",
+                         numeroVersoes: formData.get("numeroVersoes") || "",
                          statusRoteiro: formData.get("roteiroStatus"),
                          dataPrevRoteiro: formData.get("roteiroDataPrevista"),
                          dataRealRoteiro: formData.get("roteiroDataReal"),
@@ -1341,12 +1341,12 @@
                          linkPastaRoteiro: formData.get("roteiroPastaGoogleDocs"),
                          feedbackClienteRoteiro: formData.get("roteiroFeedbackCliente"),
                          quantidadeConteudos: formData.get("quantidadeConteudos"),
-                         conteudosJSON: JSON.stringify(conteudos),
+                         conteudos: JSON.stringify(conteudos),
                          statusPostagem: formData.get("postagemStatus"),
                          redeSocial: formData.get("postagemRedeSocial"),
                          tipoPost: formData.get("postagemTipo"),
                          dataPrevPostagem: formData.get("postagemData"),
-                         dataRealPostagem: "",
+                         dataRealPostagem: formData.get("dataRealPostagem") || "",
                          horarioPostagem: formData.get("postagemHorario"),
                          linkPostagem: formData.get("postagemLink"),
                          dataPrevColetaMetricas: formData.get("metricasDataPrevista"),
@@ -1958,6 +1958,9 @@
                               } else {
                                    badge.classList.add("hidden");
                               }
+                         })
+                         .withFailureHandler(function (error) {
+                              console.error("Erro ao atualizar badge de notificações:", error);
                          })
                          .contarNotificacoesNaoLidas("TODOS");
                }
