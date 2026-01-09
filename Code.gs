@@ -1335,6 +1335,10 @@ function criarAssessorado(dados) {
       return { success: false, message: 'Nome e Usuário são obrigatórios' };
     }
    
+    // Validar data PJ Data Criação (Rule 3.3)
+    const pjDataCriacaoValidada = dados.pjDataCriacao ?
+      validarDataPayload(dados.pjDataCriacao, 'pjDataCriacao') : null;
+
     // Adicionar linha com TODOS os 44 campos
     sheet.appendRow([
       id,                             // 1. ID
@@ -1371,7 +1375,7 @@ function criarAssessorado(dados) {
       dados.testemunhaRg || '',       // 32. Testemunha RG
       dados.pjRazaoSocial || '',      // 33. PJ Razão Social
       dados.pjCnpj || '',             // 34. PJ CNPJ
-      dados.pjDataCriacao || '',      // 35. PJ Data Criação
+      pjDataCriacaoValidada || '',    // 35. PJ Data Criação (validada)
       dados.pjEndereco || '',         // 36. PJ Endereço
       dados.pjEmail || '',            // 37. PJ Email
       dados.pjInscricaoMunicipal || '', // 38. PJ Inscrição Municipal
@@ -1556,7 +1560,15 @@ function atualizarAssessorado(dados) {
     // Novos campos - Pessoa Jurídica
     if (dados.pjRazaoSocial !== undefined) sheet.getRange(rowNum, 33).setValue(dados.pjRazaoSocial);
     if (dados.pjCnpj !== undefined) sheet.getRange(rowNum, 34).setValue(dados.pjCnpj);
-    if (dados.pjDataCriacao !== undefined) sheet.getRange(rowNum, 35).setValue(dados.pjDataCriacao);
+
+    // Validar PJ Data Criação (Rule 3.3)
+    if (dados.pjDataCriacao !== undefined) {
+      const dataValidada = validarDataPayload(dados.pjDataCriacao, 'pjDataCriacao');
+      if (dataValidada) {
+        sheet.getRange(rowNum, 35).setValue(dataValidada);
+      }
+    }
+
     if (dados.pjEndereco !== undefined) sheet.getRange(rowNum, 36).setValue(dados.pjEndereco);
     if (dados.pjEmail !== undefined) sheet.getRange(rowNum, 37).setValue(dados.pjEmail);
     if (dados.pjInscricaoMunicipal !== undefined) sheet.getRange(rowNum, 38).setValue(dados.pjInscricaoMunicipal);
