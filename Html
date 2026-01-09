@@ -401,6 +401,14 @@
                 */
                function callWithTimeout(functionName, params = [], timeout = 30000) {
                     return new Promise((resolve, reject) => {
+                         // Verificar se google.script está disponível
+                         if (typeof google === 'undefined' || typeof google.script === 'undefined') {
+                              hideLoading();
+                              showToast("❌ Apps Script não está disponível. Recarregue a página.", "error");
+                              reject(new Error("google.script não disponível"));
+                              return;
+                         }
+
                          let timeoutId;
                          let completed = false;
 
@@ -2611,12 +2619,35 @@
                          })
                          .testarIntegracoes();
                }
-               document.addEventListener("DOMContentLoaded", function () {
+               /**
+                * Inicialização segura - Aguarda google.script estar disponível
+                * Previne erro "google is not defined" no Apps Script Web App
+                */
+               function inicializarApp() {
+                    // Verificar se google.script está disponível
+                    if (typeof google === 'undefined' || typeof google.script === 'undefined') {
+                         console.warn('⏳ Aguardando google.script ficar disponível...');
+                         setTimeout(inicializarApp, 100);
+                         return;
+                    }
+
+                    // Verificar se Lucide está disponível
+                    if (typeof lucide === 'undefined') {
+                         console.warn('⏳ Aguardando Lucide carregar...');
+                         setTimeout(inicializarApp, 100);
+                         return;
+                    }
+
+                    console.log('✅ google.script e Lucide disponíveis - Inicializando app...');
                     lucide.createIcons();
                     renderDashboard();
                     setInterval(function () {
                          atualizarBadgeNotificacoes();
                     }, 30000);
+               }
+
+               document.addEventListener("DOMContentLoaded", function () {
+                    inicializarApp();
 
                     // ═══════════════════════════════════════════════════════════
                     // EVENT LISTENERS - SIDEBAR NAVIGATION
