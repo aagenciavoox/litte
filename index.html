@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Littê v4.0</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+    <!-- Container Principal -->
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+
+        <!-- Header -->
+        <header class="mb-8 text-center">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">Sistema Littê v4.0</h1>
+            <p class="text-gray-600">Versão Mínima Viável - Reconstruída do Zero</p>
+        </header>
+
+        <!-- Status Card -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Status do Sistema</h2>
+            <div id="status-info" class="space-y-2 text-gray-600">
+                <p>⏳ Aguardando inicialização...</p>
+            </div>
+        </div>
+
+        <!-- Ações -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Ações</h2>
+            <div class="flex gap-4">
+                <button
+                    id="btn-testar"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors">
+                    Testar Conexão Backend
+                </button>
+                <button
+                    id="btn-estatisticas"
+                    class="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors">
+                    Carregar Estatísticas
+                </button>
+            </div>
+        </div>
+
+        <!-- Resultado -->
+        <div id="resultado-container" class="hidden">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Resultado</h2>
+                <pre id="resultado" class="bg-gray-100 p-4 rounded text-sm overflow-x-auto"></pre>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        /**
+         * ═══════════════════════════════════════════════════════════
+         * INICIALIZAÇÃO SEGURA
+         * ═══════════════════════════════════════════════════════════
+         */
+
+        let appReady = false;
+
+        // Aguardar DOM carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('✅ DOM carregado');
+            inicializarApp();
+        });
+
+        /**
+         * Inicializa a aplicação de forma segura
+         */
+        function inicializarApp() {
+            // Verificar se google.script está disponível
+            if (typeof google === 'undefined' || typeof google.script === 'undefined') {
+                console.warn('⏳ google.script não disponível ainda, tentando novamente...');
+                setTimeout(inicializarApp, 100);
+                return;
+            }
+
+            console.log('✅ google.script disponível');
+            appReady = true;
+
+            // Atualizar status
+            document.getElementById('status-info').innerHTML = `
+                <p class="text-green-600 font-semibold">✅ Sistema inicializado com sucesso</p>
+                <p class="text-sm text-gray-500">google.script.run disponível</p>
+                <p class="text-sm text-gray-500">Pronto para interagir com backend</p>
+            `;
+
+            // Configurar event listeners
+            configurarEventos();
+        }
+
+        /**
+         * ═══════════════════════════════════════════════════════════
+         * EVENT LISTENERS
+         * ═══════════════════════════════════════════════════════════
+         */
+
+        function configurarEventos() {
+            // Botão testar conexão
+            document.getElementById('btn-testar').addEventListener('click', function() {
+                testarConexao();
+            });
+
+            // Botão estatísticas
+            document.getElementById('btn-estatisticas').addEventListener('click', function() {
+                carregarEstatisticas();
+            });
+        }
+
+        /**
+         * ═══════════════════════════════════════════════════════════
+         * FUNÇÕES DE INTERAÇÃO COM BACKEND
+         * ═══════════════════════════════════════════════════════════
+         */
+
+        /**
+         * Testa a conexão com o backend
+         */
+        function testarConexao() {
+            if (!appReady) {
+                mostrarErro('Sistema ainda não está pronto. Aguarde...');
+                return;
+            }
+
+            mostrarLoading('Testando conexão...');
+
+            google.script.run
+                .withSuccessHandler(function(resultado) {
+                    console.log('✅ Resposta recebida:', resultado);
+                    mostrarResultado(resultado);
+                })
+                .withFailureHandler(function(erro) {
+                    console.error('❌ Erro:', erro);
+                    mostrarErro('Erro ao conectar: ' + erro.message);
+                })
+                .testarConexao();
+        }
+
+        /**
+         * Carrega estatísticas do backend
+         */
+        function carregarEstatisticas() {
+            if (!appReady) {
+                mostrarErro('Sistema ainda não está pronto. Aguarde...');
+                return;
+            }
+
+            mostrarLoading('Carregando estatísticas...');
+
+            google.script.run
+                .withSuccessHandler(function(resultado) {
+                    console.log('✅ Estatísticas recebidas:', resultado);
+                    mostrarResultado(resultado);
+                })
+                .withFailureHandler(function(erro) {
+                    console.error('❌ Erro:', erro);
+                    mostrarErro('Erro ao carregar estatísticas: ' + erro.message);
+                })
+                .getEstatisticas();
+        }
+
+        /**
+         * ═══════════════════════════════════════════════════════════
+         * FUNÇÕES DE UI
+         * ═══════════════════════════════════════════════════════════
+         */
+
+        /**
+         * Mostra estado de loading
+         */
+        function mostrarLoading(mensagem) {
+            const container = document.getElementById('resultado-container');
+            const resultado = document.getElementById('resultado');
+
+            container.classList.remove('hidden');
+            container.classList.add('fade-in');
+            resultado.className = 'bg-blue-50 border-2 border-blue-200 p-4 rounded text-blue-800';
+            resultado.textContent = '⏳ ' + mensagem;
+        }
+
+        /**
+         * Mostra resultado de sucesso
+         */
+        function mostrarResultado(dados) {
+            const container = document.getElementById('resultado-container');
+            const resultado = document.getElementById('resultado');
+
+            container.classList.remove('hidden');
+            container.classList.add('fade-in');
+            resultado.className = 'bg-green-50 border-2 border-green-200 p-4 rounded text-sm overflow-x-auto';
+            resultado.textContent = JSON.stringify(dados, null, 2);
+        }
+
+        /**
+         * Mostra mensagem de erro
+         */
+        function mostrarErro(mensagem) {
+            const container = document.getElementById('resultado-container');
+            const resultado = document.getElementById('resultado');
+
+            container.classList.remove('hidden');
+            container.classList.add('fade-in');
+            resultado.className = 'bg-red-50 border-2 border-red-200 p-4 rounded text-red-800';
+            resultado.textContent = '❌ ' + mensagem;
+        }
+
+        // Log inicial
+        console.log('📦 Script carregado - aguardando DOMContentLoaded');
+    </script>
+
+</body>
+</html>
