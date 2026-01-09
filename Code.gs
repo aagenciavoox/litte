@@ -779,15 +779,62 @@ function validarCEP(cep) {
  */
 function validarCNPJ(cnpj) {
   if (!cnpj) return false;
-  
+
   cnpj = cnpj.replace(/\D/g, '');
-  
+
   if (cnpj.length !== 14) return false;
-  
+
   // Validação básica (todos os dígitos iguais)
   if (/^(\d)\1+$/.test(cnpj)) return false;
-  
+
   return true; // Validação completa seria muito extensa
+}
+
+
+/**
+ * Valida e converte uma data vinda do frontend (payload)
+ * REGRA CRÍTICA: NUNCA confiar em strings de data do HTML sem validação
+ *
+ * @param {string|Date} valorData - Data a ser validada (pode ser string ou Date)
+ * @param {string} nomeCampo - Nome do campo para mensagens de erro
+ * @returns {Date|null} Objeto Date válido ou null se vazio/undefined
+ * @throws {Error} Se a data for inválida
+ *
+ * @example
+ * // Uso correto:
+ * const dataValidada = validarDataPayload(dados.dataPrevista, 'dataPrevista');
+ * if (dataValidada) {
+ *   sheet.getRange(row, 10).setValue(dataValidada);
+ * }
+ */
+function validarDataPayload(valorData, nomeCampo) {
+  // Se o valor é undefined ou null, retorna null (campo opcional)
+  if (valorData === undefined || valorData === null || valorData === '') {
+    return null;
+  }
+
+  // Se já é um objeto Date, valida apenas se é válida
+  if (valorData instanceof Date) {
+    if (isNaN(valorData.getTime())) {
+      throw new Error('Data inválida no campo: ' + nomeCampo);
+    }
+    return valorData;
+  }
+
+  // Se é string, tenta converter
+  if (typeof valorData === 'string') {
+    const data = new Date(valorData);
+
+    // Valida se a conversão resultou em data válida
+    if (isNaN(data.getTime())) {
+      throw new Error('Data inválida no campo "' + nomeCampo + '". Valor recebido: ' + valorData);
+    }
+
+    return data;
+  }
+
+  // Tipo não suportado
+  throw new Error('Tipo de data não suportado no campo "' + nomeCampo + '". Tipo recebido: ' + typeof valorData);
 }
 
 
@@ -2417,12 +2464,22 @@ function atualizarAndamento(dados) {
       sheet.getRange(rowNum, 13).setValue(dados.ultimoRetorno);
     }
 
+    // ═══════════════════════════════════════════════════════════════
+    // VALIDAÇÃO DE DATAS (REGRA CRÍTICA)
+    // ═══════════════════════════════════════════════════════════════
+
     if (dados.dataPrimeiroContato !== undefined) {
-      sheet.getRange(rowNum, 19).setValue(dados.dataPrimeiroContato);
+      const dataValidada = validarDataPayload(dados.dataPrimeiroContato, 'dataPrimeiroContato');
+      if (dataValidada) {
+        sheet.getRange(rowNum, 19).setValue(dataValidada); // Coluna 19 - Data Primeiro Contato
+      }
     }
 
     if (dados.proximoFollowUp !== undefined) {
-      sheet.getRange(rowNum, 20).setValue(dados.proximoFollowUp);
+      const dataValidada = validarDataPayload(dados.proximoFollowUp, 'proximoFollowUp');
+      if (dataValidada) {
+        sheet.getRange(rowNum, 20).setValue(dataValidada); // Coluna 20 - Próximo Follow-up
+      }
     }
 
     if (dados.ultimaMensagem !== undefined) {
@@ -2430,8 +2487,8 @@ function atualizarAndamento(dados) {
     }
 
     // Atualizar timestamps
-    sheet.getRange(rowNum, 18).setValue(new Date()); // Última Atualização
-    sheet.getRange(rowNum, 21).setValue(new Date()); // Última Interação
+    sheet.getRange(rowNum, 18).setValue(new Date()); // Coluna 18 - Última Atualização
+    sheet.getRange(rowNum, 21).setValue(new Date()); // Coluna 21 - Última Interação
     
     SpreadsheetApp.flush();
     Logger.log('✅ Campos atualizados na planilha');
@@ -3778,8 +3835,19 @@ function updateChecklistCompleto(dados) {
     // CONTRATO (5-10)
     if (dados.precisaContrato !== undefined) sheet.getRange(rowNum, 5).setValue(dados.precisaContrato);
     if (dados.statusContrato !== undefined) sheet.getRange(rowNum, 6).setValue(dados.statusContrato);
-    if (dados.dataPrevAssinaturaContrato !== undefined) sheet.getRange(rowNum, 7).setValue(dados.dataPrevAssinaturaContrato);
-    if (dados.dataRealAssinaturaContrato !== undefined) sheet.getRange(rowNum, 8).setValue(dados.dataRealAssinaturaContrato);
+
+    // Coluna 7 - Data Prevista Assinatura Contrato (COM VALIDAÇÃO)
+    if (dados.dataPrevAssinaturaContrato !== undefined) {
+      const dataValidada = validarDataPayload(dados.dataPrevAssinaturaContrato, 'dataPrevAssinaturaContrato');
+      sheet.getRange(rowNum, 7).setValue(dataValidada);
+    }
+
+    // Coluna 8 - Data Real Assinatura Contrato (COM VALIDAÇÃO)
+    if (dados.dataRealAssinaturaContrato !== undefined) {
+      const dataValidada = validarDataPayload(dados.dataRealAssinaturaContrato, 'dataRealAssinaturaContrato');
+      sheet.getRange(rowNum, 8).setValue(dataValidada);
+    }
+
     if (dados.linkContrato !== undefined) sheet.getRange(rowNum, 9).setValue(dados.linkContrato);
     if (dados.obsContrato !== undefined) sheet.getRange(rowNum, 10).setValue(dados.obsContrato);
     
@@ -3790,7 +3858,13 @@ function updateChecklistCompleto(dados) {
     if (dados.valorProduto !== undefined) sheet.getRange(rowNum, 14).setValue(dados.valorProduto);
     if (dados.enderecoEnvio !== undefined) sheet.getRange(rowNum, 15).setValue(dados.enderecoEnvio);
     if (dados.statusProduto !== undefined) sheet.getRange(rowNum, 16).setValue(dados.statusProduto);
-    if (dados.dataEnvioProduto !== undefined) sheet.getRange(rowNum, 17).setValue(dados.dataEnvioProduto);
+
+    // Coluna 17 - Data Envio Produto (COM VALIDAÇÃO)
+    if (dados.dataEnvioProduto !== undefined) {
+      const dataValidada = validarDataPayload(dados.dataEnvioProduto, 'dataEnvioProduto');
+      sheet.getRange(rowNum, 17).setValue(dataValidada);
+    }
+
     if (dados.codigoRastreio !== undefined) sheet.getRange(rowNum, 18).setValue(dados.codigoRastreio);
     if (dados.linkRastreamento !== undefined) sheet.getRange(rowNum, 19).setValue(dados.linkRastreamento);
 
@@ -3799,9 +3873,25 @@ function updateChecklistCompleto(dados) {
     if (dados.tipoRoteiro !== undefined) sheet.getRange(rowNum, 21).setValue(dados.tipoRoteiro);
     if (dados.numeroVersoes !== undefined) sheet.getRange(rowNum, 22).setValue(dados.numeroVersoes);
     if (dados.statusRoteiro !== undefined) sheet.getRange(rowNum, 23).setValue(dados.statusRoteiro);
-    if (dados.dataPrevRoteiro !== undefined) sheet.getRange(rowNum, 24).setValue(dados.dataPrevRoteiro);
-    if (dados.dataRealRoteiro !== undefined) sheet.getRange(rowNum, 25).setValue(dados.dataRealRoteiro);
-    if (dados.dataAprovRoteiro !== undefined) sheet.getRange(rowNum, 26).setValue(dados.dataAprovRoteiro);
+
+    // Coluna 24 - Data Prevista Roteiro (COM VALIDAÇÃO)
+    if (dados.dataPrevRoteiro !== undefined) {
+      const dataValidada = validarDataPayload(dados.dataPrevRoteiro, 'dataPrevRoteiro');
+      sheet.getRange(rowNum, 24).setValue(dataValidada);
+    }
+
+    // Coluna 25 - Data Real Roteiro (COM VALIDAÇÃO)
+    if (dados.dataRealRoteiro !== undefined) {
+      const dataValidada = validarDataPayload(dados.dataRealRoteiro, 'dataRealRoteiro');
+      sheet.getRange(rowNum, 25).setValue(dataValidada);
+    }
+
+    // Coluna 26 - Data Aprovação Roteiro (COM VALIDAÇÃO)
+    if (dados.dataAprovRoteiro !== undefined) {
+      const dataValidada = validarDataPayload(dados.dataAprovRoteiro, 'dataAprovRoteiro');
+      sheet.getRange(rowNum, 26).setValue(dataValidada);
+    }
+
     if (dados.linkPastaRoteiro !== undefined) sheet.getRange(rowNum, 27).setValue(dados.linkPastaRoteiro);
 
     // CONTEÚDO (28-30) - NOVO SISTEMA (repurposed columns)
@@ -3819,29 +3909,62 @@ function updateChecklistCompleto(dados) {
     if (dados.statusPostagem !== undefined) sheet.getRange(rowNum, 31).setValue(dados.statusPostagem);
     if (dados.redeSocial !== undefined) sheet.getRange(rowNum, 32).setValue(dados.redeSocial);
     if (dados.tipoPost !== undefined) sheet.getRange(rowNum, 33).setValue(dados.tipoPost);
-    if (dados.dataPrevPostagem !== undefined) sheet.getRange(rowNum, 34).setValue(dados.dataPrevPostagem);
+
+    // Coluna 34 - Data Prevista Postagem (COM VALIDAÇÃO)
+    if (dados.dataPrevPostagem !== undefined) {
+      const dataValidada = validarDataPayload(dados.dataPrevPostagem, 'dataPrevPostagem');
+      sheet.getRange(rowNum, 34).setValue(dataValidada);
+    }
+
     if (dados.horarioPostagem !== undefined) sheet.getRange(rowNum, 35).setValue(dados.horarioPostagem);
-    if (dados.dataRealPostagem !== undefined) sheet.getRange(rowNum, 36).setValue(dados.dataRealPostagem);
+
+    // Coluna 36 - Data Real Postagem (COM VALIDAÇÃO)
+    if (dados.dataRealPostagem !== undefined) {
+      const dataValidada = validarDataPayload(dados.dataRealPostagem, 'dataRealPostagem');
+      sheet.getRange(rowNum, 36).setValue(dataValidada);
+    }
+
     if (dados.linkPostagem !== undefined) sheet.getRange(rowNum, 37).setValue(dados.linkPostagem);
-    
+
     // MÉTRICAS (38-40) - SEM detalhes
-    if (dados.dataPrevColetaMetricas !== undefined) sheet.getRange(rowNum, 38).setValue(dados.dataPrevColetaMetricas);
+    // Coluna 38 - Data Prevista Coleta Métricas (COM VALIDAÇÃO)
+    if (dados.dataPrevColetaMetricas !== undefined) {
+      const dataValidada = validarDataPayload(dados.dataPrevColetaMetricas, 'dataPrevColetaMetricas');
+      sheet.getRange(rowNum, 38).setValue(dataValidada);
+    }
+
     if (dados.statusMetricas !== undefined) sheet.getRange(rowNum, 39).setValue(dados.statusMetricas);
     if (dados.linkPastaMetricas !== undefined) sheet.getRange(rowNum, 40).setValue(dados.linkPastaMetricas);
-    
+
     // NF (41-48) - SEM impostos, valor líquido, XML
     if (dados.statusNF !== undefined) sheet.getRange(rowNum, 41).setValue(dados.statusNF);
     if (dados.tipoNF !== undefined) sheet.getRange(rowNum, 42).setValue(dados.tipoNF);
     if (dados.numeroNF !== undefined) sheet.getRange(rowNum, 43).setValue(dados.numeroNF);
     if (dados.cnpj !== undefined) sheet.getRange(rowNum, 44).setValue(dados.cnpj);
-    if (dados.dataEmissaoNF !== undefined) sheet.getRange(rowNum, 45).setValue(dados.dataEmissaoNF);
-    if (dados.dataPrevPagamento !== undefined) sheet.getRange(rowNum, 46).setValue(dados.dataPrevPagamento);
+
+    // Coluna 45 - Data Emissão NF (COM VALIDAÇÃO)
+    if (dados.dataEmissaoNF !== undefined) {
+      const dataValidada = validarDataPayload(dados.dataEmissaoNF, 'dataEmissaoNF');
+      sheet.getRange(rowNum, 45).setValue(dataValidada);
+    }
+
+    // Coluna 46 - Data Prevista Pagamento (COM VALIDAÇÃO)
+    if (dados.dataPrevPagamento !== undefined) {
+      const dataValidada = validarDataPayload(dados.dataPrevPagamento, 'dataPrevPagamento');
+      sheet.getRange(rowNum, 46).setValue(dataValidada);
+    }
+
     if (dados.valorNF !== undefined) sheet.getRange(rowNum, 47).setValue(dados.valorNF);
     if (dados.linkPdfNF !== undefined) sheet.getRange(rowNum, 48).setValue(dados.linkPdfNF);
     
     // REPASSE (49-54)
     if (dados.statusRepasse !== undefined) sheet.getRange(rowNum, 52).setValue(dados.statusRepasse);
-    if (dados.dataRepasse !== undefined) sheet.getRange(rowNum, 53).setValue(dados.dataRepasse);
+
+    // Coluna 53 - Data Repasse (COM VALIDAÇÃO)
+    if (dados.dataRepasse !== undefined) {
+      const dataValidada = validarDataPayload(dados.dataRepasse, 'dataRepasse');
+      sheet.getRange(rowNum, 53).setValue(dataValidada);
+    }
     if (dados.comprovanteRepasse !== undefined) sheet.getRange(rowNum, 54).setValue(dados.comprovanteRepasse);
     
     // OBSERVAÇÕES (55)
@@ -6555,28 +6678,109 @@ function notificarProximosPrazos(diasAntecedencia) {
  * @param {string} emailDestinatario - Email do destinatário
  * @returns {Object} {success, message}
  */
+/**
+ * Envia notificação por email usando GmailApp
+ *
+ * @param {string} idNotificacao - ID da notificação
+ * @param {string} emailDestinatario - Email do destinatário
+ * @returns {Object} {success, message}
+ */
 function enviarEmailNotificacao(idNotificacao, emailDestinatario) {
   try {
+    logInicio('enviarEmailNotificacao - ID: ' + idNotificacao);
+    Logger.log('📧 Destinatário: ' + emailDestinatario);
+
     const notificacao = getNotificacao(idNotificacao);
-    
+
     if (!notificacao) {
+      Logger.log('❌ Notificação não encontrada');
       return { success: false, message: 'Notificação não encontrada' };
     }
-    
-    // TODO: Implementar envio de email
-    Logger.log('📧 Email de notificação (placeholder)');
-    Logger.log('   Para: ' + emailDestinatario);
-    Logger.log('   Assunto: ' + notificacao.titulo);
-    Logger.log('   Mensagem: ' + notificacao.mensagem);
-    
-    return { 
-      success: false, 
-      message: 'Funcionalidade não implementada ainda' 
+
+    // ═══════════════════════════════════════════════════════════════
+    // VALIDAÇÃO DE EMAIL
+    // ═══════════════════════════════════════════════════════════════
+
+    if (!emailDestinatario || emailDestinatario.trim() === '') {
+      throw new Error('Email do destinatário é obrigatório');
+    }
+
+    if (!validarEmail(emailDestinatario)) {
+      throw new Error('Email inválido: ' + emailDestinatario);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // MONTAR CORPO DO EMAIL (HTML)
+    // ═══════════════════════════════════════════════════════════════
+
+    const assunto = '[Sistema Littê] ' + notificacao.titulo;
+
+    const corpoHtml = `
+      <html>
+        <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: white; padding: 20px; border-radius: 10px 10px 0 0;">
+            <h2 style="margin: 0;">Sistema Littê v3.5</h2>
+            <p style="margin: 5px 0 0 0; opacity: 0.9;">Notificação Automática</p>
+          </div>
+
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-top: none; padding: 30px; border-radius: 0 0 10px 10px;">
+            <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #10B981;">
+              <h3 style="margin-top: 0; color: #0F172A;">${notificacao.titulo}</h3>
+              <p style="color: #64748b; margin-bottom: 15px;">${notificacao.mensagem}</p>
+
+              ${notificacao.idCampanha ? `
+                <div style="background: #f1f5f9; padding: 12px; border-radius: 6px; margin-top: 15px;">
+                  <strong style="color: #475569;">Campanha:</strong>
+                  <code style="background: white; padding: 4px 8px; border-radius: 4px; color: #10B981;">${notificacao.idCampanha}</code>
+                </div>
+              ` : ''}
+            </div>
+
+            <div style="background: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 6px; margin-top: 20px;">
+              <p style="margin: 0; color: #856404; font-size: 13px;">
+                <strong>Tipo:</strong> ${notificacao.tipo} |
+                <strong>Prioridade:</strong> ${notificacao.prioridade} |
+                <strong>Data:</strong> ${formatDateTime(new Date(notificacao.dataCriacao))}
+              </p>
+            </div>
+
+            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;">
+
+            <p style="color: #94a3b8; font-size: 12px; text-align: center; margin: 0;">
+              Este é um email automático do Sistema Littê v3.5.<br>
+              Não responda a este email.
+            </p>
+          </div>
+        </body>
+      </html>
+    `;
+
+    // ═══════════════════════════════════════════════════════════════
+    // ENVIAR EMAIL VIA GMAILAPP
+    // ═══════════════════════════════════════════════════════════════
+
+    GmailApp.sendEmail(
+      emailDestinatario,
+      assunto,
+      notificacao.mensagem, // Texto plano (fallback)
+      {
+        htmlBody: corpoHtml,
+        name: 'Sistema Littê'
+      }
+    );
+
+    Logger.log('✅ Email enviado com sucesso para: ' + emailDestinatario);
+    logFim('enviarEmailNotificacao', true);
+
+    return {
+      success: true,
+      message: 'Email enviado com sucesso para ' + emailDestinatario
     };
-    
+
   } catch (e) {
-    Logger.log('❌ enviarEmailNotificacao: ' + e);
-    return { success: false, message: e.toString() };
+    Logger.log('❌ ERRO ao enviar email: ' + e);
+    logFim('enviarEmailNotificacao', false);
+    return { success: false, message: 'Erro ao enviar email: ' + e.toString() };
   }
 }
 

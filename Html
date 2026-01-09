@@ -246,42 +246,42 @@
                          <a
                               href="#"
                               class="sidebar-item active flex items-center px-4 py-3 text-white"
-                              onclick="loadView('dashboard', event)"
+                              data-view="dashboard"
                               ><i data-lucide="layout-dashboard" class="w-5 h-5 mr-3"></i><span>Dashboard</span></a
                          ><a
                               href="#"
                               class="sidebar-item flex items-center px-4 py-3 text-slate-300"
-                              onclick="loadView('assessorados', event)"
+                              data-view="assessorados"
                               ><i data-lucide="users" class="w-5 h-5 mr-3"></i><span>Assessorados</span></a
                          ><a
                               href="#"
                               class="sidebar-item flex items-center px-4 py-3 text-slate-300"
-                              onclick="loadView('prospeccoes', event)"
+                              data-view="prospeccoes"
                               ><i data-lucide="target" class="w-5 h-5 mr-3"></i><span>Prospecções</span></a
                          ><a
                               href="#"
                               class="sidebar-item flex items-center px-4 py-3 text-slate-300"
-                              onclick="loadView('campanhas', event)"
+                              data-view="campanhas"
                               ><i data-lucide="rocket" class="w-5 h-5 mr-3"></i><span>Campanhas Ativas</span></a
                          ><a
                               href="#"
                               class="sidebar-item flex items-center px-4 py-3 text-slate-300"
-                              onclick="loadView('financeiro', event)"
+                              data-view="financeiro"
                               ><i data-lucide="dollar-sign" class="w-5 h-5 mr-3"></i><span>Financeiro</span></a
                          ><a
                               href="#"
                               class="sidebar-item flex items-center px-4 py-3 text-slate-300"
-                              onclick="loadView('templates', event)"
+                              data-view="templates"
                               ><i data-lucide="file-text" class="w-5 h-5 mr-3"></i><span>Templates</span></a
                          ><a
                               href="#"
                               class="sidebar-item flex items-center px-4 py-3 text-slate-300"
-                              onclick="loadView('notas', event)"
+                              data-view="notas"
                               ><i data-lucide="sticky-note" class="w-5 h-5 mr-3"></i><span>Notas</span></a
                          ><a
                               href="#"
                               class="sidebar-item flex items-center px-4 py-3 text-slate-300"
-                              onclick="loadView('notificacoes', event)"
+                              data-view="notificacoes"
                               ><i data-lucide="bell" class="w-5 h-5 mr-3"></i><span>Notificações</span
                               ><span
                                    id="notif-badge"
@@ -290,7 +290,7 @@
                          ><a
                               href="#"
                               class="sidebar-item flex items-center px-4 py-3 text-slate-300"
-                              onclick="loadView('config', event)"
+                              data-view="config"
                               ><i data-lucide="settings" class="w-5 h-5 mr-3"></i><span>Configurações</span></a
                          >
                     </nav>
@@ -550,7 +550,7 @@
                     if (viewTitle) viewTitle.textContent = "Dashboard";
                     if (viewSubtitle) viewSubtitle.textContent = "Visão geral do sistema e indicadores";
                     if (viewActions) {
-                         viewActions.innerHTML = `<button onclick="openModalNovoAndamento()" class="btn-primary px-4 py-2 rounded-xl flex items-center gap-2 font-medium shadow-lg"><i data-lucide="plus" class="w-4 h-4"></i><span>Novo Andamento</span></button><button onclick="refreshDashboard()" class="btn-secondary px-4 py-2 rounded-xl flex items-center gap-2 font-medium"><i data-lucide="refresh-cw" class="w-4 h-4"></i><span>Atualizar</span></button>`;
+                         viewActions.innerHTML = `<button data-action="openModalNovoAndamento" class="btn-primary px-4 py-2 rounded-xl flex items-center gap-2 font-medium shadow-lg"><i data-lucide="plus" class="w-4 h-4"></i><span>Novo Andamento</span></button><button data-action="refreshDashboard" class="btn-secondary px-4 py-2 rounded-xl flex items-center gap-2 font-medium"><i data-lucide="refresh-cw" class="w-4 h-4"></i><span>Atualizar</span></button>`;
                          lucide.createIcons();
                     }
                     showLoading("Sincronizando indicadores...");
@@ -734,7 +734,7 @@
                     document.getElementById("view-title").textContent = "Assessorados";
                     document.getElementById("view-subtitle").textContent = "Gerenciar influenciadores";
                     document.getElementById("view-actions").innerHTML =
-                         `<button onclick="openModalNovoAssessorado()" class="btn-primary px-4 py-2 rounded-xl flex items-center gap-2 font-medium shadow-lg"><i data-lucide="plus" class="w-4 h-4"></i><span>Novo Assessorado</span></button><button onclick="refreshAssessorados()" class="btn-secondary px-4 py-2 rounded-xl flex items-center gap-2 font-medium"><i data-lucide="refresh-cw" class="w-4 h-4"></i><span>Atualizar</span></button>`;
+                         `<button data-action="openModalNovoAssessorado" class="btn-primary px-4 py-2 rounded-xl flex items-center gap-2 font-medium shadow-lg"><i data-lucide="plus" class="w-4 h-4"></i><span>Novo Assessorado</span></button><button data-action="refreshAssessorados" class="btn-secondary px-4 py-2 rounded-xl flex items-center gap-2 font-medium"><i data-lucide="refresh-cw" class="w-4 h-4"></i><span>Atualizar</span></button>`;
                     lucide.createIcons();
                     document.getElementById("view-content").innerHTML =
                          `<div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-8 text-center"><div class="skeleton w-12 h-12 rounded-full mx-auto mb-4"></div><p class="text-slate-600">Carregando assessorados...</p></div>`;
@@ -746,7 +746,7 @@
                          })
                          .withFailureHandler(function (error) {
                               document.getElementById("view-content").innerHTML =
-                                   `<div class="bg-white rounded-3xl shadow-sm p-8 text-center"><p class="text-red-500 mb-4">Erro ao carregar assessorados</p><button onclick="refreshAssessorados()" class="btn-primary px-4 py-2 rounded-xl">Tentar novamente</button></div>`;
+                                   `<div class="bg-white rounded-3xl shadow-sm p-8 text-center"><p class="text-red-500 mb-4">Erro ao carregar assessorados</p><button data-action="refreshAssessorados" class="btn-primary px-4 py-2 rounded-xl">Tentar novamente</button></div>`;
                               showToast("Erro ao carregar assessorados", "error");
                               console.error(error);
                          })
@@ -757,10 +757,10 @@
                     const totalInativos = assessorados.length - totalAtivos;
                     let html = `<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6"><div class="card-metric bg-white border-2 border-litte-dark rounded-2xl p-5 hover:shadow-xl transition-all"><div class="flex items-center justify-between"><div><p class="text-sm text-slate-600 mb-1 font-medium">Total</p><p class="text-4xl font-black text-litte-dark">${assessorados.length}</p></div><div class="w-12 h-12 bg-litte-dark rounded-2xl flex items-center justify-center shadow-lg"><i data-lucide="users" class="w-6 h-6 text-white"></i></div></div></div><div class="card-metric bg-white border-2 border-green-500 rounded-2xl p-5 hover:shadow-xl transition-all"><div class="flex items-center justify-between"><div><p class="text-sm text-slate-600 mb-1 font-medium">Ativos</p><p class="text-4xl font-black text-green-600">${totalAtivos}</p></div><div class="w-12 h-12 bg-green-500 rounded-2xl flex items-center justify-center shadow-lg"><i data-lucide="check-circle" class="w-6 h-6 text-white"></i></div></div></div><div class="card-metric bg-white border-2 border-red-500 rounded-2xl p-5 hover:shadow-xl transition-all"><div class="flex items-center justify-between"><div><p class="text-sm text-slate-600 mb-1 font-medium">Inativos</p><p class="text-4xl font-black text-red-600">${totalInativos}</p></div><div class="w-12 h-12 bg-red-500 rounded-2xl flex items-center justify-center shadow-lg"><i data-lucide="x-circle" class="w-6 h-6 text-white"></i></div></div></div><div class="card-metric bg-white border-2 border-litte-green rounded-2xl p-5 hover:shadow-xl transition-all"><div class="flex items-center justify-between"><div><p class="text-sm text-slate-600 mb-1 font-medium">Este Mês</p><p class="text-4xl font-black text-litte-green">${getAssessoradosDoMes(assessorados)}</p></div><div class="w-12 h-12 bg-litte-green rounded-2xl flex items-center justify-center shadow-lg"><i data-lucide="calendar" class="w-6 h-6 text-white"></i></div></div></div></div><div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden"><div class="overflow-x-auto"><table class="w-full"><thead><tr class="border-b border-slate-200"><th class="text-left px-6 py-4 text-xs font-bold text-white uppercase tracking-wider">ID</th><th class="text-left px-6 py-4 text-xs font-bold text-white uppercase tracking-wider">Nome</th><th class="text-left px-6 py-4 text-xs font-bold text-white uppercase tracking-wider">Usuário</th><th class="text-left px-6 py-4 text-xs font-bold text-white uppercase tracking-wider">Email</th><th class="text-left px-6 py-4 text-xs font-bold text-white uppercase tracking-wider">Telefone</th><th class="text-left px-6 py-4 text-xs font-bold text-white uppercase tracking-wider">Status</th><th class="text-center px-6 py-4 text-xs font-bold text-white uppercase tracking-wider">Ações</th></tr></thead><tbody>`;
                     if (assessorados.length === 0) {
-                         html += `<tr><td colspan="7" class="px-6 py-12 text-center text-slate-500"><div class="flex flex-col items-center gap-4"><i data-lucide="users" class="w-16 h-16 text-slate-300"></i><p class="text-lg font-medium">Nenhum assessorado cadastrado</p><button onclick="openModalNovoAssessorado()" class="btn-primary px-6 py-3 rounded-xl">Cadastrar Primeiro Assessorado</button></div></td></tr>`;
+                         html += `<tr><td colspan="7" class="px-6 py-12 text-center text-slate-500"><div class="flex flex-col items-center gap-4"><i data-lucide="users" class="w-16 h-16 text-slate-300"></i><p class="text-lg font-medium">Nenhum assessorado cadastrado</p><button data-action="openModalNovoAssessorado" class="btn-primary px-6 py-3 rounded-xl">Cadastrar Primeiro Assessorado</button></div></td></tr>`;
                     } else {
                          assessorados.forEach(function (a) {
-                              html += `<tr class="border-b border-slate-100 hover:bg-slate-50 transition-all"><td class="px-6 py-4"><span class="font-mono font-bold text-xs text-litte-dark">${a.id || "--"}</span></td><td class="px-6 py-4"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-gradient-to-br from-litte-accent to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold shadow-sm">${a.nome ? a.nome.charAt(0).toUpperCase() : "?"}</div><span class="font-semibold text-slate-900">${a.nome || "--"}</span></div></td><td class="px-6 py-4"><span class="text-slate-600">@${a.usuario || "--"}</span></td><td class="px-6 py-4"><span class="text-sm text-slate-600">${a.email || "--"}</span></td><td class="px-6 py-4"><span class="text-sm text-slate-600">${a.telefone || "--"}</span></td><td class="px-6 py-4"><span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold ${a.status === "Ativo" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}"><i data-lucide="${a.status === "Ativo" ? "check" : "x"}" class="w-3 h-3"></i>${a.status || "Ativo"}</span></td><td class="px-6 py-4"><div class="flex items-center justify-center gap-1"><button onclick="verDetalhesAssessorado('${a.id}')" class="p-2 hover:bg-blue-50 rounded-xl transition-all" title="Ver detalhes"><i data-lucide="eye" class="w-4 h-4 text-slate-600"></i></button><button onclick="editarAssessorado('${a.id}')" class="p-2 hover:bg-yellow-50 rounded-xl transition-all" title="Editar"><i data-lucide="edit" class="w-4 h-4 text-slate-600"></i></button>${a.urlPastaDrive ? `<a href="${a.urlPastaDrive}" target="_blank" class="p-2 hover:bg-green-50 rounded-xl transition-all" title="Pasta Drive"><i data-lucide="folder" class="w-4 h-4 text-slate-600"></i></a>` : ""}${a.linkPlanilhaEspelho ? `<a href="${a.linkPlanilhaEspelho}" target="_blank" class="p-2 hover:bg-purple-50 rounded-xl transition-all" title="Planilha"><i data-lucide="table" class="w-4 h-4 text-slate-600"></i></a>` : ""}</div></td></tr>`;
+                              html += `<tr class="border-b border-slate-100 hover:bg-slate-50 transition-all"><td class="px-6 py-4"><span class="font-mono font-bold text-xs text-litte-dark">${a.id || "--"}</span></td><td class="px-6 py-4"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-gradient-to-br from-litte-accent to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold shadow-sm">${a.nome ? a.nome.charAt(0).toUpperCase() : "?"}</div><span class="font-semibold text-slate-900">${a.nome || "--"}</span></div></td><td class="px-6 py-4"><span class="text-slate-600">@${a.usuario || "--"}</span></td><td class="px-6 py-4"><span class="text-sm text-slate-600">${a.email || "--"}</span></td><td class="px-6 py-4"><span class="text-sm text-slate-600">${a.telefone || "--"}</span></td><td class="px-6 py-4"><span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold ${a.status === "Ativo" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}"><i data-lucide="${a.status === "Ativo" ? "check" : "x"}" class="w-3 h-3"></i>${a.status || "Ativo"}</span></td><td class="px-6 py-4"><div class="flex items-center justify-center gap-1"><button data-action="verDetalhesAssessorado" data-id="${a.id}" class="p-2 hover:bg-blue-50 rounded-xl transition-all" title="Ver detalhes"><i data-lucide="eye" class="w-4 h-4 text-slate-600"></i></button><button data-action="editarAssessorado" data-id="${a.id}" class="p-2 hover:bg-yellow-50 rounded-xl transition-all" title="Editar"><i data-lucide="edit" class="w-4 h-4 text-slate-600"></i></button>${a.urlPastaDrive ? `<a href="${a.urlPastaDrive}" target="_blank" class="p-2 hover:bg-green-50 rounded-xl transition-all" title="Pasta Drive"><i data-lucide="folder" class="w-4 h-4 text-slate-600"></i></a>` : ""}${a.linkPlanilhaEspelho ? `<a href="${a.linkPlanilhaEspelho}" target="_blank" class="p-2 hover:bg-purple-50 rounded-xl transition-all" title="Planilha"><i data-lucide="table" class="w-4 h-4 text-slate-600"></i></a>` : ""}</div></td></tr>`;
                          });
                     }
                     html += `</tbody></table></div></div>`;
@@ -1224,7 +1224,7 @@
                     document.getElementById("view-title").textContent = "Prospecções";
                     document.getElementById("view-subtitle").textContent = "Gerenciar andamentos e negociações";
                     document.getElementById("view-actions").innerHTML =
-                         `<button onclick="openModalNovoAndamento()" class="btn-primary px-4 py-2 rounded-xl flex items-center gap-2 font-medium shadow-lg"><i data-lucide="plus" class="w-4 h-4"></i><span>Novo Andamento</span></button><button onclick="refreshProspeccoes()" class="btn-secondary px-4 py-2 rounded-xl flex items-center gap-2 font-medium"><i data-lucide="refresh-cw" class="w-4 h-4"></i><span>Atualizar</span></button>`;
+                         `<button data-action="openModalNovoAndamento" class="btn-primary px-4 py-2 rounded-xl flex items-center gap-2 font-medium shadow-lg"><i data-lucide="plus" class="w-4 h-4"></i><span>Novo Andamento</span></button><button data-action="refreshProspeccoes" class="btn-secondary px-4 py-2 rounded-xl flex items-center gap-2 font-medium"><i data-lucide="refresh-cw" class="w-4 h-4"></i><span>Atualizar</span></button>`;
                     lucide.createIcons();
                     showLoading("Carregando prospecções...");
                     google.script.run
@@ -1244,7 +1244,7 @@
                function renderTabelaProspeccoes(andamentos) {
                     let html = `<div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden"><div class="overflow-x-auto"><table class="w-full"><thead><tr class="border-b border-slate-200"><th class="text-left px-6 py-4 text-xs font-bold text-white uppercase tracking-wider">ID Campanha</th><th class="text-left px-6 py-4 text-xs font-bold text-white uppercase tracking-wider">Influenciador</th><th class="text-left px-6 py-4 text-xs font-bold text-white uppercase tracking-wider">Marca</th><th class="text-left px-6 py-4 text-xs font-bold text-white uppercase tracking-wider">Fase</th><th class="text-left px-6 py-4 text-xs font-bold text-white uppercase tracking-wider">Status</th><th class="text-left px-6 py-4 text-xs font-bold text-white uppercase tracking-wider">Responsável</th><th class="text-left px-6 py-4 text-xs font-bold text-white uppercase tracking-wider">Valor Proposto</th><th class="text-center px-6 py-4 text-xs font-bold text-white uppercase tracking-wider">Ações</th></tr></thead><tbody>`;
                     if (andamentos.length === 0) {
-                         html += `<tr><td colspan="8" class="px-6 py-12 text-center text-slate-500"><div class="flex flex-col items-center gap-4"><i data-lucide="target" class="w-16 h-16 text-slate-300"></i><p class="text-lg font-medium">Nenhuma prospecção ativa</p><button onclick="openModalNovoAndamento()" class="btn-primary px-6 py-3 rounded-xl">Criar Primeira Prospecção</button></div></td></tr>`;
+                         html += `<tr><td colspan="8" class="px-6 py-12 text-center text-slate-500"><div class="flex flex-col items-center gap-4"><i data-lucide="target" class="w-16 h-16 text-slate-300"></i><p class="text-lg font-medium">Nenhuma prospecção ativa</p><button data-action="openModalNovoAndamento" class="btn-primary px-6 py-3 rounded-xl">Criar Primeira Prospecção</button></div></td></tr>`;
                     } else {
                          andamentos.forEach(function (a) {
                               const faseBadge = getFaseBadge(a.fase);
@@ -1545,7 +1545,7 @@
                     document.getElementById("view-title").textContent = "Campanhas Ativas";
                     document.getElementById("view-subtitle").textContent = "Acompanhar execução das campanhas";
                     document.getElementById("view-actions").innerHTML =
-                         `<button onclick="refreshCampanhas()" class="btn-secondary px-4 py-2 rounded-xl flex items-center gap-2 font-medium"><i data-lucide="refresh-cw" class="w-4 h-4"></i><span>Atualizar</span></button>`;
+                         `<button data-action="refreshCampanhas" class="btn-secondary px-4 py-2 rounded-xl flex items-center gap-2 font-medium"><i data-lucide="refresh-cw" class="w-4 h-4"></i><span>Atualizar</span></button>`;
                     lucide.createIcons();
                     showLoading("Carregando campanhas ativas...");
                     google.script.run
@@ -2005,7 +2005,7 @@
                     document.getElementById("view-title").textContent = "Financeiro";
                     document.getElementById("view-subtitle").textContent = "Gestão financeira e faturamento";
                     document.getElementById("view-actions").innerHTML =
-                         `<button onclick="refreshFinanceiro()" class="btn-secondary px-4 py-2 rounded-xl flex items-center gap-2 font-medium"><i data-lucide="refresh-cw" class="w-4 h-4"></i><span>Atualizar</span></button>`;
+                         `<button data-action="refreshFinanceiro" class="btn-secondary px-4 py-2 rounded-xl flex items-center gap-2 font-medium"><i data-lucide="refresh-cw" class="w-4 h-4"></i><span>Atualizar</span></button>`;
                     lucide.createIcons();
                     showLoading("Carregando dados financeiros...");
                     google.script.run
@@ -2111,7 +2111,7 @@
                     document.getElementById("view-title").textContent = "Templates";
                     document.getElementById("view-subtitle").textContent = "Mensagens e modelos reutilizáveis";
                     document.getElementById("view-actions").innerHTML =
-                         `<button onclick="openModalNovoTemplate()" class="btn-primary px-4 py-2 rounded-xl flex items-center gap-2 font-medium shadow-lg"><i data-lucide="plus" class="w-4 h-4"></i><span>Novo Template</span></button><button onclick="refreshTemplates()" class="btn-secondary px-4 py-2 rounded-xl flex items-center gap-2 font-medium"><i data-lucide="refresh-cw" class="w-4 h-4"></i><span>Atualizar</span></button>`;
+                         `<button data-action="openModalNovoTemplate" class="btn-primary px-4 py-2 rounded-xl flex items-center gap-2 font-medium shadow-lg"><i data-lucide="plus" class="w-4 h-4"></i><span>Novo Template</span></button><button data-action="refreshTemplates" class="btn-secondary px-4 py-2 rounded-xl flex items-center gap-2 font-medium"><i data-lucide="refresh-cw" class="w-4 h-4"></i><span>Atualizar</span></button>`;
                     lucide.createIcons();
                     showLoading("Carregando templates...");
                     google.script.run
@@ -2131,7 +2131,7 @@
                function renderListaTemplates(templates) {
                     if (!templates || templates.length === 0) {
                          document.getElementById("view-content").innerHTML =
-                              `<div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-12 text-center"><i data-lucide="file-text" class="w-16 h-16 text-slate-300 mx-auto mb-4"></i><p class="text-lg font-semibold text-slate-600 mb-4">Nenhum template cadastrado</p><button onclick="openModalNovoTemplate()" class="btn-primary px-6 py-3 rounded-xl">Criar Primeiro Template</button></div>`;
+                              `<div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-12 text-center"><i data-lucide="file-text" class="w-16 h-16 text-slate-300 mx-auto mb-4"></i><p class="text-lg font-semibold text-slate-600 mb-4">Nenhum template cadastrado</p><button data-action="openModalNovoTemplate" class="btn-primary px-6 py-3 rounded-xl">Criar Primeiro Template</button></div>`;
                          lucide.createIcons();
                          return;
                     }
@@ -2236,7 +2236,7 @@
                     document.getElementById("view-title").textContent = "Notas";
                     document.getElementById("view-subtitle").textContent = "Anotações e lembretes";
                     document.getElementById("view-actions").innerHTML =
-                         `<button onclick="openModalNovaNota()" class="btn-primary px-4 py-2 rounded-xl flex items-center gap-2 font-medium shadow-lg"><i data-lucide="plus" class="w-4 h-4"></i><span>Nova Nota</span></button><button onclick="refreshNotas()" class="btn-secondary px-4 py-2 rounded-xl flex items-center gap-2 font-medium"><i data-lucide="refresh-cw" class="w-4 h-4"></i><span>Atualizar</span></button>`;
+                         `<button data-action="openModalNovaNota" class="btn-primary px-4 py-2 rounded-xl flex items-center gap-2 font-medium shadow-lg"><i data-lucide="plus" class="w-4 h-4"></i><span>Nova Nota</span></button><button data-action="refreshNotas" class="btn-secondary px-4 py-2 rounded-xl flex items-center gap-2 font-medium"><i data-lucide="refresh-cw" class="w-4 h-4"></i><span>Atualizar</span></button>`;
                     lucide.createIcons();
                     showLoading("Carregando notas...");
                     google.script.run
@@ -2256,7 +2256,7 @@
                function renderListaNotas(notas) {
                     if (!notas || notas.length === 0) {
                          document.getElementById("view-content").innerHTML =
-                              `<div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-12 text-center"><i data-lucide="sticky-note" class="w-16 h-16 text-slate-300 mx-auto mb-4"></i><p class="text-lg font-semibold text-slate-600 mb-4">Nenhuma nota criada</p><button onclick="openModalNovaNota()" class="btn-primary px-6 py-3 rounded-xl">Criar Primeira Nota</button></div>`;
+                              `<div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-12 text-center"><i data-lucide="sticky-note" class="w-16 h-16 text-slate-300 mx-auto mb-4"></i><p class="text-lg font-semibold text-slate-600 mb-4">Nenhuma nota criada</p><button data-action="openModalNovaNota" class="btn-primary px-6 py-3 rounded-xl">Criar Primeira Nota</button></div>`;
                          lucide.createIcons();
                          return;
                     }
@@ -2389,7 +2389,7 @@
                     document.getElementById("view-title").textContent = "Notificações";
                     document.getElementById("view-subtitle").textContent = "Central de notificações do sistema";
                     document.getElementById("view-actions").innerHTML =
-                         `<button onclick="marcarTodasLidas()" class="btn-secondary px-4 py-2 rounded-xl flex items-center gap-2 font-medium"><i data-lucide="check-check" class="w-4 h-4"></i><span>Marcar Todas como Lidas</span></button><button onclick="refreshNotificacoes()" class="btn-secondary px-4 py-2 rounded-xl flex items-center gap-2 font-medium"><i data-lucide="refresh-cw" class="w-4 h-4"></i><span>Atualizar</span></button>`;
+                         `<button data-action="marcarTodasLidas" class="btn-secondary px-4 py-2 rounded-xl flex items-center gap-2 font-medium"><i data-lucide="check-check" class="w-4 h-4"></i><span>Marcar Todas como Lidas</span></button><button data-action="refreshNotificacoes" class="btn-secondary px-4 py-2 rounded-xl flex items-center gap-2 font-medium"><i data-lucide="refresh-cw" class="w-4 h-4"></i><span>Atualizar</span></button>`;
                     lucide.createIcons();
                     showLoading("Carregando notificações...");
                     google.script.run
@@ -2617,6 +2617,88 @@
                     setInterval(function () {
                          atualizarBadgeNotificacoes();
                     }, 30000);
+
+                    // ═══════════════════════════════════════════════════════════
+                    // EVENT LISTENERS - SIDEBAR NAVIGATION
+                    // ═══════════════════════════════════════════════════════════
+                    document.getElementById('sidebar').addEventListener('click', function(event) {
+                         const target = event.target.closest('[data-view]');
+                         if (target) {
+                              event.preventDefault();
+                              const view = target.getAttribute('data-view');
+                              loadView(view, event);
+                         }
+                    });
+
+                    // ═══════════════════════════════════════════════════════════
+                    // EVENT DELEGATION - DYNAMIC CONTENT
+                    // Captura cliques em elementos dinâmicos via data-action
+                    // ═══════════════════════════════════════════════════════════
+                    document.body.addEventListener('click', function(event) {
+                         const target = event.target.closest('[data-action]');
+                         if (!target) return;
+
+                         const action = target.getAttribute('data-action');
+                         const params = target.getAttribute('data-params');
+                         const id = target.getAttribute('data-id');
+
+                         // Mapa de ações disponíveis
+                         const actions = {
+                              'openModalNovoAssessorado': openModalNovoAssessorado,
+                              'refreshAssessorados': refreshAssessorados,
+                              'openModalNovoAndamento': openModalNovoAndamento,
+                              'refreshProspeccoes': refreshProspeccoes,
+                              'refreshCampanhas': refreshCampanhas,
+                              'refreshFinanceiro': refreshFinanceiro,
+                              'openModalNovoTemplate': openModalNovoTemplate,
+                              'refreshTemplates': refreshTemplates,
+                              'openModalNovaNota': openModalNovaNota,
+                              'refreshNotas': refreshNotas,
+                              'marcarTodasLidas': marcarTodasLidas,
+                              'refreshNotificacoes': refreshNotificacoes,
+                              'refreshDashboard': refreshDashboard,
+                              'verDetalhesAssessorado': verDetalhesAssessorado,
+                              'editarAssessorado': editarAssessorado,
+                              'abrirDetalhesCampanha': abrirDetalhesCampanha,
+                              'verAndamento': verAndamento,
+                              'editarAndamento': editarAndamento,
+                              'verChecklist': verChecklist,
+                              'openModalChecklist': openModalChecklist,
+                              'verFinanceiro': verFinanceiro,
+                              'editarFinanceiro': editarFinanceiro,
+                              'excluirTemplate': excluirTemplate,
+                              'editarTemplate': editarTemplate,
+                              'editarNota': editarNota,
+                              'excluirNota': excluirNota,
+                              'marcarNotificacaoLida': marcarNotificacaoLida
+                         };
+
+                         if (actions[action]) {
+                              event.preventDefault();
+                              if (params) {
+                                   // Parse JSON params se existirem
+                                   const parsedParams = JSON.parse(params);
+                                   actions[action](parsedParams);
+                              } else if (id) {
+                                   // Usa data-id para passar um único parâmetro
+                                   actions[action](id);
+                              } else {
+                                   actions[action]();
+                              }
+                         }
+                    });
+
+                    // ═══════════════════════════════════════════════════════════
+                    // EVENT DELEGATION - MODAL CLOSE BUTTONS
+                    // ═══════════════════════════════════════════════════════════
+                    document.body.addEventListener('click', function(event) {
+                         const target = event.target.closest('[data-close-modal]');
+                         if (target) {
+                              const modalId = target.getAttribute('data-close-modal');
+                              closeModal(modalId);
+                         }
+                    });
+
                     console.log(
                          "%c🎉 Sistema Littê v3.5 Premium Carregado!",
                          "color:#10B981;font-size:16px;font-weight:bold"
